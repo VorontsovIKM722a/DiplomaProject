@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="DiplomaProject/DiplomaProject.Client/DiplomaProject.Client.csproj" />
+  <Project Path="DiplomaProject/DiplomaProject/DiplomaProject.csproj" />
+</Solution>

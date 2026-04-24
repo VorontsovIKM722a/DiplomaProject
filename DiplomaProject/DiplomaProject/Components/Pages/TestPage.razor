@@ -5,25 +5,81 @@
 
 <h3>TestPage</h3>
 
-@foreach (var test in tests)
+@for (int t = 0; t < tests.Count; t++)
 {
     <div>
-        <h4>@test.TaskDescription</h4>
+        <h4>@tests[t].TaskDescription</h4>
 
         <ul>
-            @foreach (var answer in test.TaskAnswers)
+            @for (int i = 0; i < tests[t].TaskAnswers.Count; i++)
             {
-                <li>@answer</li>
+                <li>
+                    <input type="checkbox" @bind="selected[t][i]" />
+                    @tests[t].TaskAnswers[i]
+                </li>
             }
         </ul>
+        
+
+
     </div>
 }
+<button class="btn btn-primary" @onclick="HandleClick">
+    Check your answers
+</button>
+@if (showResult)
+{
+    <h4>Result: @score / @tests.Count</h4>
+}
+
 
 @code {
     List<TestInfo> tests;
-
+    List<List<bool>> selected;
+    
     protected override void OnInitialized()
     {
         tests = TestService.GetSampleTests();
+
+        selected = new List<List<bool>>();
+
+        foreach (var test in tests)
+        {
+            var list = new List<bool>();
+
+            foreach (var answer in test.TaskAnswers)
+            {
+                list.Add(false);
+            }
+
+            selected.Add(list);
+        }
+    }
+
+    int score = 0;
+    bool showResult = false; //виправити вивід результату
+    private void HandleClick()
+    {
+        score = 0;
+
+        for (int t = 0; t < tests.Count; t++)
+        {
+            bool isCorrect = true;
+
+            for (int i = 0; i < tests[t].TaskAnswers.Count; i++)
+            {
+                bool shouldBeChecked = tests[t].CorrectAnswerIndexList.Contains(i);
+
+                if (selected[t][i] != shouldBeChecked)
+                {
+                    isCorrect = false;
+                }
+            }
+
+            if (isCorrect)
+                score++;
+        }
+
+        showResult = true;//виправити вивід результату
     }
 }

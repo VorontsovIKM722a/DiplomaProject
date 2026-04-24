@@ -1,0 +1,29 @@
+﻿@page "/test"
+@using DiplomaProject.Services
+@using DiplomaProject.Models
+@inject TestService TestService
+
+<h3>TestPage</h3>
+
+@foreach (var test in tests)
+{
+    <div>
+        <h4>@test.TaskDescription</h4>
+
+        <ul>
+            @foreach (var answer in test.TaskAnswers)
+            {
+                <li>@answer</li>
+            }
+        </ul>
+    </div>
+}
+
+@code {
+    List<TestInfo> tests;
+
+    protected override void OnInitialized()
+    {
+        tests = TestService.GetSampleTests();
+    }
+}

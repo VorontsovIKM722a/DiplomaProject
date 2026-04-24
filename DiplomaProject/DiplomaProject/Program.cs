@@ -1,14 +1,17 @@
 using DiplomaProject.Client.Pages;
 using DiplomaProject.Components;
+using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
+using DiplomaProject.Services;
 
 var builder = WebApplication.CreateBuilder(args);
-
+builder.Services.AddSingleton<TestService>();
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents()
     .AddInteractiveWebAssemblyComponents();
 
 var app = builder.Build();
+
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

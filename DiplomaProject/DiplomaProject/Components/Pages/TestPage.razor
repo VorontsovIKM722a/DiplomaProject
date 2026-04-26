@@ -2,31 +2,39 @@
 @using DiplomaProject.Services
 @using DiplomaProject.Models
 @inject TestService TestService
-
+@rendermode InteractiveServer
 <h3>TestPage</h3>
+
 
 @for (int t = 0; t < tests.Count; t++)
 {
+    var tIndex = t;
+
     <div>
-        <h4>@tests[t].TaskDescription</h4>
+        <h4>@tests[tIndex].TaskDescription</h4>
 
         <ul>
-            @for (int i = 0; i < tests[t].TaskAnswers.Count; i++)
+           
+            @for (int i = 0; i < tests[tIndex].TaskAnswers.Count; i++)
             {
+                var iIndex = i;
+
                 <li>
-                    <input type="checkbox" @bind="selected[t][i]" />
-                    @tests[t].TaskAnswers[i]
+                    <input type="checkbox"
+                           checked="@selected[tIndex][iIndex]"
+                           @onchange="e => selected[tIndex][iIndex] = (bool)e.Value" />
+                    
+                    @tests[tIndex].TaskAnswers[iIndex]
                 </li>
             }
         </ul>
-        
-
-
     </div>
+}
 }
 <button class="btn btn-primary" @onclick="HandleClick">
     Check your answers
 </button>
+
 @if (showResult)
 {
     <h4>Result: @score / @tests.Count</h4>
@@ -36,7 +44,7 @@
 @code {
     List<TestInfo> tests;
     List<List<bool>> selected;
-    
+
     protected override void OnInitialized()
     {
         tests = TestService.GetSampleTests();
@@ -56,23 +64,25 @@
         }
     }
 
+
     int score = 0;
-    bool showResult = false; //виправити вивід результату
+    bool showResult = false; 
     private void HandleClick()
     {
         score = 0;
-
+        
         for (int t = 0; t < tests.Count; t++)
         {
             bool isCorrect = true;
 
             for (int i = 0; i < tests[t].TaskAnswers.Count; i++)
             {
-                bool shouldBeChecked = tests[t].CorrectAnswerIndexList.Contains(i);
+                bool mustBeChecked = TestService.CheckAnswer(t, i);
 
-                if (selected[t][i] != shouldBeChecked)
+                if (selected[t][i] != mustBeChecked)
                 {
                     isCorrect = false;
+                    break;
                 }
             }
 
@@ -80,6 +90,6 @@
                 score++;
         }
 
-        showResult = true;//виправити вивід результату
+        showResult = true;
     }
 }

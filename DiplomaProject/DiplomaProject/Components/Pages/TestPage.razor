@@ -12,31 +12,37 @@
 
     <div>
         <h4>@tests[tIndex].TaskDescription</h4>
-        @if (tests[tIndex].CorrectAnswerIndexList.Count == 1)
+        @if (tests[tIndex].CorrectAnswerIndexList.Count > 1)
         {
             <ul>
            
                 @for (int i = 0; i < tests[tIndex].TaskAnswers.Count; i++)
                 {
                     var iIndex = i;
-               
-                    {
-                        <li>
-                            <input type="checkbox"
-                                   checked="@selected[tIndex][iIndex]"
-                                   @onchange="e => selected[tIndex][iIndex] = (bool)e.Value" />
-                    
-                            @tests[tIndex].TaskAnswers[iIndex]
-                        </li>
-                    }
-                
 
+                    <li>
+                        <input type="checkbox"
+                               checked="@selectedIndexCheckbox[tIndex][iIndex]"
+                               @onchange="e => selectedIndexCheckbox[tIndex][iIndex] = (bool)e.Value" />
+
+                        @tests[tIndex].TaskAnswers[iIndex]
+                    </li>
                 }
             </ul>
         }
-        @if (tests[t].CorrectAnswerIndexList.Count == 1)
+        @if (tests[tIndex].CorrectAnswerIndexList.Count == 1)
         {
-            
+            @for (int i = 0; i < tests[tIndex].TaskAnswers.Count; i++)
+            {
+                var iIndex = i;
+                <li>
+                    <input type="radio"
+                           name="@($"q{tIndex}")"
+                           checked="@(selectedIndexRadio[tIndex] == iIndex)"
+                           @onchange="e => selectedIndexRadio[tIndex] = iIndex" />
+                    @tests[tIndex].TaskAnswers[iIndex]
+                </li>
+            }
         }
 
     </div>
@@ -54,13 +60,13 @@
 
 @code {
     List<TestInfo> tests;
-    List<List<bool>> selected;
-
+    List<List<bool>> selectedIndexCheckbox;
+    List<int> selectedIndexRadio;
     protected override void OnInitialized()
     {
         tests = TestService.GetSampleTests();
 
-        selected = new List<List<bool>>();
+        selectedIndexCheckbox = new List<List<bool>>();
 
         foreach (var test in tests)
         {
@@ -71,7 +77,12 @@
                 list.Add(false);
             }
 
-            selected.Add(list);
+            selectedIndexCheckbox.Add(list);
+        }
+        selectedIndexRadio = new List<int>();
+        foreach (var test in tests)
+        {
+            selectedIndexRadio.Add(-1);
         }
     }
 
@@ -84,16 +95,27 @@
 
         for (int t = 0; t < tests.Count; t++)
         {
-            bool isCorrect = true;
+            bool isCorrect;
 
-            for (int i = 0; i < tests[t].TaskAnswers.Count; i++)
+            if (tests[t].CorrectAnswerIndexList.Count == 1)
             {
-                bool mustBeChecked = tests[t].CorrectAnswerIndexList.Contains(i);
+                int correctIndex = tests[t].CorrectAnswerIndexList[0];
 
-                if (selected[t][i] != mustBeChecked)
+                isCorrect = selectedIndexRadio[t] == correctIndex;
+            }
+            else
+            {
+                isCorrect = true;
+
+                for (int i = 0; i < tests[t].TaskAnswers.Count; i++)
                 {
-                    isCorrect = false;
-                    break;
+                    bool mustBeChecked = tests[t].CorrectAnswerIndexList.Contains(i);
+
+                    if (selectedIndexCheckbox[t][i] != mustBeChecked)
+                    {
+                        isCorrect = false;
+                        break;
+                    }
                 }
             }
 

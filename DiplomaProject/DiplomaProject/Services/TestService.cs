@@ -58,6 +58,16 @@ namespace DiplomaProject.Services
             "C# is?",
             new List<string> { "Language", "Database", "OS" },
             new List<int> { 0 }
+        ),
+         new TestInfo(
+            "Find fruits",
+            new List<string> { "apple", "cabbage", "peach" },
+            new List<int> { 0, 2 }
+        ),
+          new TestInfo(
+            "Find round objects",
+            new List<string> { "wheel", "plate", "cabbage" },
+            new List<int> { 0, 1 }
         )
     };
         }

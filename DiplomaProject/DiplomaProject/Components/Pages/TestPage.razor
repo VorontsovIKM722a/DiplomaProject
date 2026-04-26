@@ -12,22 +12,33 @@
 
     <div>
         <h4>@tests[tIndex].TaskDescription</h4>
-
-        <ul>
+        @if (tests[tIndex].CorrectAnswerIndexList.Count == 1)
+        {
+            <ul>
            
-            @for (int i = 0; i < tests[tIndex].TaskAnswers.Count; i++)
-            {
-                var iIndex = i;
-
-                <li>
-                    <input type="checkbox"
-                           checked="@selected[tIndex][iIndex]"
-                           @onchange="e => selected[tIndex][iIndex] = (bool)e.Value" />
+                @for (int i = 0; i < tests[tIndex].TaskAnswers.Count; i++)
+                {
+                    var iIndex = i;
+               
+                    {
+                        <li>
+                            <input type="checkbox"
+                                   checked="@selected[tIndex][iIndex]"
+                                   @onchange="e => selected[tIndex][iIndex] = (bool)e.Value" />
                     
-                    @tests[tIndex].TaskAnswers[iIndex]
-                </li>
-            }
-        </ul>
+                            @tests[tIndex].TaskAnswers[iIndex]
+                        </li>
+                    }
+                
+
+                }
+            </ul>
+        }
+        @if (tests[t].CorrectAnswerIndexList.Count == 1)
+        {
+            
+        }
+
     </div>
 }
 }
@@ -70,14 +81,14 @@
     private void HandleClick()
     {
         score = 0;
-        
+
         for (int t = 0; t < tests.Count; t++)
         {
             bool isCorrect = true;
 
             for (int i = 0; i < tests[t].TaskAnswers.Count; i++)
             {
-                bool mustBeChecked = TestService.CheckAnswer(t, i);
+                bool mustBeChecked = tests[t].CorrectAnswerIndexList.Contains(i);
 
                 if (selected[t][i] != mustBeChecked)
                 {

@@ -4,25 +4,56 @@
 @inject TestService TestService
 @rendermode InteractiveServer
 <h3>TestPage</h3>
+<div style="height: 20px;"></div>
+<div class="d-flex gap-2 flex-wrap">
+    <div class="d-flex gap-2 flex-wrap">
+        @for (int i = 0; i < tests.Count; i++)
+        {
+            var index = i;
 
+            <button class="btn
+                @(currentQuestion == index
+                                ? "btn-primary"
+                                : showResult
+                                    ? (IsCorrect(index)
+                                        ? "btn-success"
+                                        : "btn-danger")
+                                    : IsAnswered(index)
+                                        ? "btn-success"
+                                        : "btn-outline-secondary")"
+                    @onclick="() => ButtonShowParticular(index)">
+                @(i + 1)
+            </button>
+        }
+    </div>
+</div>
 
-@for (int t = 0; t < tests.Count; t++)
+<div style="height: 20px;"></div>
+    @if (tests != null && currentQuestion < tests.Count)
 {
-    var tIndex = t;
+    var tIndex = currentQuestion;
 
     <div>
+        <h4> #@(tIndex + 1)</h4>
         <h4>@tests[tIndex].TaskDescription</h4>
+
         @if (tests[tIndex].CorrectAnswerIndexList.Count > 1)
         {
             <ul>
-           
                 @for (int i = 0; i < tests[tIndex].TaskAnswers.Count; i++)
                 {
                     var iIndex = i;
 
-                    <li>
+                    <li style="
+                        @(showResult
+                                                   ? (tests[tIndex].CorrectAnswerIndexList.Contains(iIndex)
+                                                       ? "color: green;"
+                                                       : (selectedIndexCheckbox[tIndex][iIndex] ? "color: red;" : ""))
+                                                   : "")">
+
                         <input type="checkbox"
                                checked="@selectedIndexCheckbox[tIndex][iIndex]"
+                               disabled="@showResult"
                                @onchange="e => selectedIndexCheckbox[tIndex][iIndex] = (bool)e.Value" />
 
                         @tests[tIndex].TaskAnswers[iIndex]
@@ -30,32 +61,52 @@
                 }
             </ul>
         }
-        @if (tests[tIndex].CorrectAnswerIndexList.Count == 1)
+        else
         {
             @for (int i = 0; i < tests[tIndex].TaskAnswers.Count; i++)
             {
                 var iIndex = i;
-                <li>
+
+                <li style="
+                    @(showResult
+                                            ? (iIndex == tests[tIndex].CorrectAnswerIndexList[0]
+                                                ? "color: green;"
+                                                : (selectedIndexRadio[tIndex] == iIndex ? "color: red;" : ""))
+                                            : "")">
+
                     <input type="radio"
-                           name="@($"q{tIndex}")"
+                           name="q"
                            checked="@(selectedIndexRadio[tIndex] == iIndex)"
+                           disabled="@showResult"
                            @onchange="e => selectedIndexRadio[tIndex] = iIndex" />
+
                     @tests[tIndex].TaskAnswers[iIndex]
                 </li>
             }
         }
-
     </div>
+    
 }
+@if (tests != null && currentQuestion >= tests.Count)
+{   
+    <div>
+    <button class="btn btn-primary" @onclick="ButtonCheck">
+        Check your answers
+    </button>
+    </div>
+    @if (showResult)
+    {
+        <h4>Result: @score / @tests.Count</h4>
+    }
 }
-<button class="btn btn-primary" @onclick="HandleClick">
-    Check your answers
+<div style="height: 20px;"></div>
+<button class="btn btn-primary" @onclick="ButtonBack">
+    Previous question
 </button>
 
-@if (showResult)
-{
-    <h4>Result: @score / @tests.Count</h4>
-}
+<button class="btn btn-primary" @onclick="ButtonNext">
+    Next question
+</button>
 
 
 @code {
@@ -86,10 +137,41 @@
         }
     }
 
+    bool IsAnswered(int t)
+    {
+        if (tests[t].CorrectAnswerIndexList.Count == 1)
+        {
+            return selectedIndexRadio[t] != -1;
+        }
+        else
+        {
+            return selectedIndexCheckbox[t].Any(x => x);
+        }
+    }
+
+    bool IsCorrect(int t)
+    {
+        if (tests[t].CorrectAnswerIndexList.Count == 1)
+        {
+            return selectedIndexRadio[t] == tests[t].CorrectAnswerIndexList[0];
+        }
+        else
+        {
+            for (int i = 0; i < tests[t].TaskAnswers.Count; i++)
+            {
+                bool mustBeChecked = tests[t].CorrectAnswerIndexList.Contains(i);
+
+                if (selectedIndexCheckbox[t][i] != mustBeChecked)
+                    return false;
+            }
+
+            return true;
+        }
+    }
 
     int score = 0;
-    bool showResult = false; 
-    private void HandleClick()
+    bool showResult = false;
+    private void ButtonCheck()
     {
         score = 0;
 
@@ -124,5 +206,28 @@
         }
 
         showResult = true;
+    }
+
+
+    int currentQuestion = 0;
+    private void ButtonNext()
+    {
+        if (currentQuestion < tests.Count)
+        {
+            currentQuestion++;
+        }
+    }
+
+    private void ButtonBack()
+    {
+        if (currentQuestion > 0)
+        {
+            currentQuestion--;
+        }
+    }
+
+    private void ButtonShowParticular(int index)
+    {
+        currentQuestion = index;
     }
 }

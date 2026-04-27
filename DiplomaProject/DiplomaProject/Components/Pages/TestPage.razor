@@ -3,38 +3,30 @@
 @using DiplomaProject.Models
 @inject TestService TestService
 @rendermode InteractiveServer
-<h3>TestPage</h3>
-<div style="height: 20px;"></div>
-<div class="d-flex gap-2 flex-wrap">
-    <div class="d-flex gap-2 flex-wrap">
-        @for (int i = 0; i < tests.Count; i++)
-        {
-            var index = i;
 
-            <button class="btn
-                @(currentQuestion == index
-                                ? "btn-primary"
-                                : showResult
-                                    ? (IsCorrect(index)
-                                        ? "btn-success"
-                                        : "btn-danger")
-                                    : IsAnswered(index)
-                                        ? "btn-success"
-                                        : "btn-outline-secondary")"
-                    @onclick="() => ButtonShowParticular(index)">
-                @(i + 1)
-            </button>
-        }
-    </div>
+<h3>TestPage</h3>
+
+<div style="height: 20px;"></div>
+
+<div class="d-flex gap-2 flex-wrap">
+    @for (int i = 0; i < tests.Count; i++)
+    {
+        var index = i;
+        <button class="btn @GetQuestionButtonClass(index)"
+                @onclick="() => ButtonShowParticular(index)">
+            @(i + 1)
+        </button>
+    }
 </div>
 
 <div style="height: 20px;"></div>
-    @if (tests != null && currentQuestion < tests.Count)
+
+@if (tests != null && currentQuestion < tests.Count)
 {
     var tIndex = currentQuestion;
 
     <div>
-        <h4> #@(tIndex + 1)</h4>
+        <h4>#@(tIndex + 1)</h4>
         <h4>@tests[tIndex].TaskDescription</h4>
 
         @if (tests[tIndex].CorrectAnswerIndexList.Count > 1)
@@ -44,12 +36,8 @@
                 {
                     var iIndex = i;
 
-                    <li style="
-                        @(showResult
-                                                   ? (tests[tIndex].CorrectAnswerIndexList.Contains(iIndex)
-                                                       ? "color: green;"
-                                                       : (selectedIndexCheckbox[tIndex][iIndex] ? "color: red;" : ""))
-                                                   : "")">
+                   
+                    <li style="@GetAnswerStyle(tIndex, iIndex)">
 
                         <input type="checkbox"
                                checked="@selectedIndexCheckbox[tIndex][iIndex]"
@@ -67,12 +55,8 @@
             {
                 var iIndex = i;
 
-                <li style="
-                    @(showResult
-                                            ? (iIndex == tests[tIndex].CorrectAnswerIndexList[0]
-                                                ? "color: green;"
-                                                : (selectedIndexRadio[tIndex] == iIndex ? "color: red;" : ""))
-                                            : "")">
+                
+                <li style="@GetAnswerStyle(tIndex, iIndex)">
 
                     <input type="radio"
                            name="q"
@@ -85,133 +69,136 @@
             }
         }
     </div>
-    
 }
+
 @if (tests != null && currentQuestion >= tests.Count)
-{   
+{
     <div>
-    <button class="btn btn-primary" @onclick="ButtonCheck">
-        Check your answers
-    </button>
+        <button class="btn btn-primary" @onclick="ButtonCheck">
+            Check your answers
+        </button>
     </div>
+
     @if (showResult)
     {
         <h4>Result: @score / @tests.Count</h4>
     }
 }
-<div style="height: 20px;"></div>
-<button class="btn btn-primary" @onclick="ButtonBack">
-    Previous question
-</button>
 
-<button class="btn btn-primary" @onclick="ButtonNext">
-    Next question
-</button>
+<div style="height: 20px;"></div>
+
+
+
+<div style="position: fixed; bottom: 20px; left: 275px;">
+    <button class="btn btn-primary" @onclick="ButtonBack">
+        Previous question
+    </button>
+</div>
+
+<div style="position: fixed; bottom: 20px; left: 475px;">
+    <button class="btn btn-primary" @onclick="ButtonNext">
+        Next question
+    </button>
+</div>
 
 
 @code {
     List<TestInfo> tests;
     List<List<bool>> selectedIndexCheckbox;
     List<int> selectedIndexRadio;
+
     protected override void OnInitialized()
     {
         tests = TestService.GetSampleTests();
 
-        selectedIndexCheckbox = new List<List<bool>>();
+        
+        selectedIndexCheckbox = tests
+            .Select(t => t.TaskAnswers.Select(a => false).ToList())
+            .ToList();
 
-        foreach (var test in tests)
-        {
-            var list = new List<bool>();
-
-            foreach (var answer in test.TaskAnswers)
-            {
-                list.Add(false);
-            }
-
-            selectedIndexCheckbox.Add(list);
-        }
-        selectedIndexRadio = new List<int>();
-        foreach (var test in tests)
-        {
-            selectedIndexRadio.Add(-1);
-        }
+        selectedIndexRadio = tests
+            .Select(t => -1)
+            .ToList();
     }
 
     bool IsAnswered(int t)
     {
         if (tests[t].CorrectAnswerIndexList.Count == 1)
-        {
             return selectedIndexRadio[t] != -1;
-        }
-        else
-        {
-            return selectedIndexCheckbox[t].Any(x => x);
-        }
+
+        return selectedIndexCheckbox[t].Any(x => x);
     }
 
     bool IsCorrect(int t)
     {
         if (tests[t].CorrectAnswerIndexList.Count == 1)
-        {
             return selectedIndexRadio[t] == tests[t].CorrectAnswerIndexList[0];
-        }
-        else
+
+        for (int i = 0; i < tests[t].TaskAnswers.Count; i++)
         {
-            for (int i = 0; i < tests[t].TaskAnswers.Count; i++)
-            {
-                bool mustBeChecked = tests[t].CorrectAnswerIndexList.Contains(i);
+            bool mustBeChecked = tests[t].CorrectAnswerIndexList.Contains(i);
 
-                if (selectedIndexCheckbox[t][i] != mustBeChecked)
-                    return false;
-            }
-
-            return true;
+            if (selectedIndexCheckbox[t][i] != mustBeChecked)
+                return false;
         }
+
+        return true;
+    }
+
+   
+    string GetQuestionButtonClass(int index)
+    {
+        if (showResult)
+            return IsCorrect(index) ? "btn-success" : "btn-danger";
+
+        if (currentQuestion == index)
+            return "btn-primary";
+
+        if (IsAnswered(index))
+            return "btn-success";
+
+        return "btn-outline-secondary";
+    }
+
+    
+    string GetAnswerStyle(int tIndex, int iIndex)
+    {
+        if (!showResult)
+            return "";
+
+        if (tests[tIndex].CorrectAnswerIndexList.Contains(iIndex))
+            return "color: green;";
+
+        if (tests[tIndex].CorrectAnswerIndexList.Count == 1)
+        {
+            return selectedIndexRadio[tIndex] == iIndex ? "color: red;" : "";
+        }
+
+        return selectedIndexCheckbox[tIndex][iIndex] ? "color: red;" : "";
     }
 
     int score = 0;
     bool showResult = false;
+
     private void ButtonCheck()
     {
         score = 0;
 
+        // 🔧 CHANGE: використання IsCorrect (прибрано дублювання)
         for (int t = 0; t < tests.Count; t++)
         {
-            bool isCorrect;
-
-            if (tests[t].CorrectAnswerIndexList.Count == 1)
-            {
-                int correctIndex = tests[t].CorrectAnswerIndexList[0];
-
-                isCorrect = selectedIndexRadio[t] == correctIndex;
-            }
-            else
-            {
-                isCorrect = true;
-
-                for (int i = 0; i < tests[t].TaskAnswers.Count; i++)
-                {
-                    bool mustBeChecked = tests[t].CorrectAnswerIndexList.Contains(i);
-
-                    if (selectedIndexCheckbox[t][i] != mustBeChecked)
-                    {
-                        isCorrect = false;
-                        break;
-                    }
-                }
-            }
-
-            if (isCorrect)
+            if (IsCorrect(t))
                 score++;
         }
 
         showResult = true;
     }
 
-
     int currentQuestion = 0;
+
     private void ButtonNext()
     {
+        // 🔧 CHANGE: виправлений вихід за межі
         if (currentQuestion < tests.Count)
         {
             currentQuestion++;

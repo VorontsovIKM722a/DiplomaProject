@@ -2,6 +2,7 @@
 @using DiplomaProject.Services
 @using DiplomaProject.Models
 @inject TestService TestService
+@inject TestGeneration TestGeneration
 @rendermode InteractiveServer
 
 <h3>TestPage</h3>
@@ -109,7 +110,7 @@
 
     protected override void OnInitialized()
     {
-        tests = TestService.GetSampleTests();
+        tests = TestGeneration.GetSampleTests();
 
         
         selectedIndexCheckbox = tests
@@ -184,7 +185,6 @@
     {
         score = 0;
 
-        // 🔧 CHANGE: використання IsCorrect (прибрано дублювання)
         for (int t = 0; t < tests.Count; t++)
         {
             if (IsCorrect(t))
@@ -198,7 +198,6 @@
 
     private void ButtonNext()
     {
-        // 🔧 CHANGE: виправлений вихід за межі
         if (currentQuestion < tests.Count)
         {
             currentQuestion++;

@@ -1,0 +1,36 @@
+﻿@page "/"
+@rendermode InteractiveServer
+@using System.Net.Http.Json
+<h3>Index</h3>
+<div>
+ <button class="btn btn-primary" @onclick="FetchData">
+        Do it
+        </button>
+ </div>
+@if (todo != null)
+{
+    <h3>Title: @todo.title</h3>
+    <p>Completed: @todo.completed</p>
+}
+
+
+
+@code 
+{
+    public Todo todo;
+
+    public HttpClient httpClient = new HttpClient();
+
+    public async Task FetchData()
+    {
+        todo = await httpClient.GetFromJsonAsync<Todo>("https://jsonplaceholder.typicode.com/todos/1");
+    }
+
+    public class Todo
+    {
+        public int userId { get; set; }
+        public int id { get; set; }
+        public string title { get; set; }
+        public bool completed { get; set; }
+    }
+}

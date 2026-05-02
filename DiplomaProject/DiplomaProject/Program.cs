@@ -6,6 +6,8 @@ using DiplomaProject.Services;
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddSingleton<TestService>();
 builder.Services.AddScoped<TestGeneration>();
+builder.Services.AddScoped<TabItemService>();
+
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents()

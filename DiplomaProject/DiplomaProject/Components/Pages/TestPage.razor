@@ -10,7 +10,7 @@
 <div style="height: 20px;"></div>
 
 <div class="d-flex gap-2 flex-wrap">
-    @for (int i = 0; i < tests.Count; i++)
+    @for (int i = 0; i < state.Tests.Count; i++)
     {
         var index = i;
         <button class="btn @GetQuestionButtonClass(index)"
@@ -22,18 +22,18 @@
 
 <div style="height: 20px;"></div>
 
-@if (tests != null && currentQuestion < tests.Count)
+@if (state.Tests != null && state.CurrentQuestion < state.Tests.Count)
 {
-    var tIndex = currentQuestion;
+    var tIndex = state.CurrentQuestion;
 
     <div>
         <h4>#@(tIndex + 1)</h4>
-        <h4>@tests[tIndex].TaskDescription</h4>
+        <h4>@state.Tests[tIndex].TaskDescription</h4>
 
-        @if (tests[tIndex].CorrectAnswerIndexList.Count > 1)
+        @if (state.Tests[tIndex].CorrectAnswerIndexList.Count > 1)
         {
             <ul>
-                @for (int i = 0; i < tests[tIndex].TaskAnswers.Count; i++)
+                @for (int i = 0; i < state.Tests[tIndex].TaskAnswers.Count; i++)
                 {
                     var iIndex = i;
 
@@ -41,18 +41,18 @@
                     <li style="@GetAnswerStyle(tIndex, iIndex)">
 
                         <input type="checkbox"
-                               checked="@selectedIndexCheckbox[tIndex][iIndex]"
-                               disabled="@showResult"
-                               @onchange="e => selectedIndexCheckbox[tIndex][iIndex] = (bool)e.Value" />
+                               checked="@state.SelectedCheckbox[tIndex][iIndex]"
+                               disabled="@state.ShowResult"
+                               @onchange="e => state.SelectedCheckbox[tIndex][iIndex] = (bool)e.Value" />
 
-                        @tests[tIndex].TaskAnswers[iIndex]
+                        @state.Tests[tIndex].TaskAnswers[iIndex]
                     </li>
                 }
             </ul>
         }
         else
         {
-            @for (int i = 0; i < tests[tIndex].TaskAnswers.Count; i++)
+            @for (int i = 0; i < state.Tests[tIndex].TaskAnswers.Count; i++)
             {
                 var iIndex = i;
 
@@ -61,18 +61,18 @@
 
                     <input type="radio"
                            name="q"
-                           checked="@(selectedIndexRadio[tIndex] == iIndex)"
-                           disabled="@showResult"
-                           @onchange="e => selectedIndexRadio[tIndex] = iIndex" />
+                           checked="@(state.SelectedRadio[tIndex] == iIndex)"
+                           disabled="@state.ShowResult"
+                           @onchange="e => state.SelectedRadio[tIndex] = iIndex" />
 
-                    @tests[tIndex].TaskAnswers[iIndex]
+                    @state.Tests[tIndex].TaskAnswers[iIndex]
                 </li>
             }
         }
     </div>
 }
 
-@if (tests != null && currentQuestion >= tests.Count)
+@if (state.Tests != null && state.CurrentQuestion >= state.Tests.Count)
 {
     <div>
         <button class="btn btn-primary" @onclick="ButtonCheck">
@@ -80,9 +80,9 @@
         </button>
     </div>
 
-    @if (showResult)
+    @if (state.ShowResult)
     {
-        <h4>Result: @score / @tests.Count</h4>
+        <h4>Result: @state.Score / @state.Tests.Count</h4>
     }
 }
 
@@ -104,42 +104,42 @@
 
 
 @code {
-    List<TestInfo> tests;
-    List<List<bool>> selectedIndexCheckbox;
-    List<int> selectedIndexRadio;
-
+    TestState state;
+    [Parameter]
+    public string InstanceId { get; set; }
     protected override void OnInitialized()
     {
-        tests = TestGeneration.GetSampleTests();
+        state = new TestState();
 
-        
-        selectedIndexCheckbox = tests
+        state.Tests = TestGeneration.GetSampleTests();
+
+        state.SelectedCheckbox = state.Tests
             .Select(t => t.TaskAnswers.Select(a => false).ToList())
             .ToList();
 
-        selectedIndexRadio = tests
+        state.SelectedRadio = state.Tests
             .Select(t => -1)
             .ToList();
     }
 
     bool IsAnswered(int t)
     {
-        if (tests[t].CorrectAnswerIndexList.Count == 1)
-            return selectedIndexRadio[t] != -1;
+        if (state.Tests[t].CorrectAnswerIndexList.Count == 1)
+            return state.SelectedRadio[t] != -1;
 
-        return selectedIndexCheckbox[t].Any(x => x);
+        return state.SelectedCheckbox[t].Any(x => x);
     }
 
     bool IsCorrect(int t)
     {
-        if (tests[t].CorrectAnswerIndexList.Count == 1)
-            return selectedIndexRadio[t] == tests[t].CorrectAnswerIndexList[0];
+        if (state.Tests[t].CorrectAnswerIndexList.Count == 1)
+            return state.SelectedRadio[t] == state.Tests[t].CorrectAnswerIndexList[0];
 
-        for (int i = 0; i < tests[t].TaskAnswers.Count; i++)
+        for (int i = 0; i < state.Tests[t].TaskAnswers.Count; i++)
         {
-            bool mustBeChecked = tests[t].CorrectAnswerIndexList.Contains(i);
+            bool mustBeChecked = state.Tests[t].CorrectAnswerIndexList.Contains(i);
 
-            if (selectedIndexCheckbox[t][i] != mustBeChecked)
+            if (state.SelectedCheckbox[t][i] != mustBeChecked)
                 return false;
         }
 
@@ -149,10 +149,10 @@
    
     string GetQuestionButtonClass(int index)
     {
-        if (showResult)
+        if (state.ShowResult)
             return IsCorrect(index) ? "btn-success" : "btn-danger";
 
-        if (currentQuestion == index)
+        if (state.CurrentQuestion == index)
             return "btn-primary";
 
         if (IsAnswered(index))
@@ -164,56 +164,53 @@
     
     string GetAnswerStyle(int tIndex, int iIndex)
     {
-        if (!showResult)
+        if (!state.ShowResult)
             return "";
 
-        if (tests[tIndex].CorrectAnswerIndexList.Contains(iIndex))
+        if (state.Tests[tIndex].CorrectAnswerIndexList.Contains(iIndex))
             return "color: green;";
 
-        if (tests[tIndex].CorrectAnswerIndexList.Count == 1)
+        if (state.Tests[tIndex].CorrectAnswerIndexList.Count == 1)
         {
-            return selectedIndexRadio[tIndex] == iIndex ? "color: red;" : "";
+            return state.SelectedRadio[tIndex] == iIndex ? "color: red;" : "";
         }
 
-        return selectedIndexCheckbox[tIndex][iIndex] ? "color: red;" : "";
+        return state.SelectedCheckbox[tIndex][iIndex] ? "color: red;" : "";
     }
-
-    int score = 0;
-    bool showResult = false;
+    
 
     private void ButtonCheck()
     {
-        score = 0;
+        state.Score = 0;
 
-        for (int t = 0; t < tests.Count; t++)
+        for (int t = 0; t < state.Tests.Count; t++)
         {
             if (IsCorrect(t))
-                score++;
+                state.Score++;
         }
 
-        showResult = true;
+        state.ShowResult = true;
     }
 
-    int currentQuestion = 0;
 
     private void ButtonNext()
     {
-        if (currentQuestion < tests.Count)
+        if (state.CurrentQuestion < state.Tests.Count)
         {
-            currentQuestion++;
+            state.CurrentQuestion++;
         }
     }
 
     private void ButtonBack()
     {
-        if (currentQuestion > 0)
+        if (state.CurrentQuestion > 0)
         {
-            currentQuestion--;
+            state.CurrentQuestion--;
         }
     }
 
     private void ButtonShowParticular(int index)
     {
-        currentQuestion = index;
+        state.CurrentQuestion = index;
     }
 }

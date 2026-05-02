@@ -4,34 +4,35 @@ namespace DiplomaProject.Services
 {
     public class TestService
     {
-        private readonly List<TestInfo> _tests = new();
+        private readonly Dictionary<string, TestState> _states = new();
 
-        public List<TestInfo> GetAllTests()
+        public TestState GetOrCreateState(string instanceId)
         {
-            return _tests;
+            if (string.IsNullOrWhiteSpace(instanceId))
+                throw new ArgumentException("InstanceId is required");
+
+            if (!_states.ContainsKey(instanceId))
+            {
+                var tests = new TestGeneration().GetSampleTests();
+
+                _states[instanceId] = new TestState
+                {
+                    Tests = tests,
+                    SelectedCheckbox = tests
+                        .Select(t => t.TaskAnswers.Select(_ => false).ToList())
+                        .ToList(),
+
+                    SelectedRadio = tests
+                        .Select(_ => -1)
+                        .ToList(),
+
+                    CurrentQuestion = 0,
+                    ShowResult = false,
+                    Score = 0
+                };
+            }
+
+            return _states[instanceId];
         }
-
-        public void AddTest(TestInfo test)
-        {
-            _tests.Add(test);
-        }
-
-        public TestInfo GetTest(int index)
-        {
-            if (index < 0 || index >= _tests.Count)
-                return null;
-
-            return _tests[index];
-        }
-
-        public bool CheckAnswer(int testIndex, int answerIndex)
-        {
-            var test = GetTest(testIndex);
-            if (test == null) return false;
-
-            return test.CorrectAnswerIndexList.Contains(answerIndex);
-        }
-
-        
     }
 }

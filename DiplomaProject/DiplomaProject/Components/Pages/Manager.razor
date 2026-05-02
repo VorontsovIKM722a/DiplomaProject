@@ -1,0 +1,45 @@
+﻿@page "/manager"
+@inject TabItemService TabItemService
+@using DiplomaProject.Models
+@rendermode InteractiveServer
+
+<button class="btn btn-primary" @onclick="AddTab">
+    + Нова вкладка
+</button>
+
+<div style="margin-top:10px">
+    @foreach (var tab in Tabs)
+    {
+        <button class="btn btn-secondary m-1"
+                @onclick="() => SelectTab(tab.Id)">
+            @tab.Title
+        </button>
+    }
+</div>
+
+<hr />
+
+@if (ActiveTabItem != null)
+{
+    <DynamicComponent Type="typeof(TestPage)"
+                      Parameters="@GetParams(ActiveTabItem.Id)" />
+}
+@code {
+    Dictionary<string, object> GetParams(string id) =>
+    new()
+    {
+        { "InstanceId", id }
+    };
+    void AddTab()
+        => TabItemService.AddTab();
+
+    void SelectTab(string id)
+        => TabItemService.SelectTab(id);
+
+    List<TabItem> Tabs => TabItemService.Tabs;
+
+    string? ActiveTab => TabItemService.ActiveTab;
+
+    TabItem? ActiveTabItem =>
+        Tabs.FirstOrDefault(t => t.Id == ActiveTab);
+}

@@ -1,7 +1,8 @@
-﻿@page "/home"
+﻿@page "/"
+<h1>Home instance</h1>
 
-<PageTitle>Home</PageTitle>
+<p>Tab ID: @InstanceId</p>
 
-<h1>Welcome!</h1>
-
-
+@code {
+    [Parameter] public string InstanceId { get; set; }
+}

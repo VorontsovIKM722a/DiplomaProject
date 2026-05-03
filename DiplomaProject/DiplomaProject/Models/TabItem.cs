@@ -8,5 +8,6 @@ namespace DiplomaProject.Models
         public string Title { get; set; } = "Test";
 
         public TestState State { get; set; } = new TestState();
+        public bool IsCompleted { get; set; } = false;
     }
 }

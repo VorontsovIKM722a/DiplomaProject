@@ -12,7 +12,20 @@ public class TabItemService
     {
         _testGeneration = testGeneration;
     }
+    public void RemoveTab()
+    {
+        if (ActiveTab == null)
+            return;
 
+        var tab = Tabs.FirstOrDefault(t => t.Id == ActiveTab);
+
+        if (tab != null)
+        {
+            Tabs.Remove(tab);
+        }
+
+        ActiveTab = Tabs.LastOrDefault()?.Id;
+    }
     public void AddTab()
     {
         var tab = new TabItem

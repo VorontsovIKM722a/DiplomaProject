@@ -7,6 +7,10 @@
     + Нова вкладка
 </button>
 
+<button class="btn btn-primary" @onclick="RemoveTab">
+    - Видалити вкладку
+</button>
+
 <div style="margin-top:10px">
     @foreach (var tab in Tabs)
     {
@@ -32,6 +36,9 @@
     };
     void AddTab()
         => TabItemService.AddTab();
+
+    void RemoveTab()
+        => TabItemService.RemoveTab();
 
     void SelectTab(string id)
         => TabItemService.SelectTab(id);

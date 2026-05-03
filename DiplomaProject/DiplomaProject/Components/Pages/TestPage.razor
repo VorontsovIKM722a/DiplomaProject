@@ -3,26 +3,29 @@
 @using DiplomaProject.Models
 @inject TestService TestService
 @inject TestGeneration TestGeneration
+@inject TabItemService TabItemService
 @rendermode InteractiveServer
 
 <h3>TestPage</h3>
 
 <div style="height: 20px;"></div>
 
-<div class="d-flex gap-2 flex-wrap">
-    @for (int i = 0; i < state.Tests.Count; i++)
-    {
-        var index = i;
-        <button class="btn @GetQuestionButtonClass(index)"
-                @onclick="() => ButtonShowParticular(index)">
-            @(i + 1)
-        </button>
-    }
-</div>
-
+@if (state?.Tests != null)
+{
+    <div class="d-flex gap-2 flex-wrap">
+        @for (int i = 0; i < state.Tests.Count; i++)
+        {
+            var index = i;
+            <button class="btn @GetQuestionButtonClass(index)"
+                    @onclick="() => ButtonShowParticular(index)">
+                @(i + 1)
+            </button>
+        }
+    </div>
+}
 <div style="height: 20px;"></div>
 
-@if (state.Tests != null && state.CurrentQuestion < state.Tests.Count)
+@if (state != null && state.Tests != null && state.CurrentQuestion < state.Tests.Count)
 {
     var tIndex = state.CurrentQuestion;
 
@@ -72,7 +75,7 @@
     </div>
 }
 
-@if (state.Tests != null && state.CurrentQuestion >= state.Tests.Count)
+@if (state != null && state.Tests != null && state.CurrentQuestion >= state.Tests.Count)
 {
     <div>
         <button class="btn btn-primary" @onclick="ButtonCheck">
@@ -107,19 +110,12 @@
     TestState state;
     [Parameter]
     public string InstanceId { get; set; }
-    protected override void OnInitialized()
+    protected override void OnParametersSet()
     {
-        state = new TestState();
+        var tab = TabItemService.Tabs
+            .FirstOrDefault(t => t.Id == InstanceId);
 
-        state.Tests = TestGeneration.GetSampleTests();
-
-        state.SelectedCheckbox = state.Tests
-            .Select(t => t.TaskAnswers.Select(a => false).ToList())
-            .ToList();
-
-        state.SelectedRadio = state.Tests
-            .Select(t => -1)
-            .ToList();
+        state = tab?.State;
     }
 
     bool IsAnswered(int t)

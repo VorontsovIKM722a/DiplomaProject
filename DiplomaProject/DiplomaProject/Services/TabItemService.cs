@@ -3,8 +3,15 @@ using DiplomaProject.Services;
 
 public class TabItemService
 {
+    private readonly TestGeneration _testGeneration;
+
     public List<TabItem> Tabs { get; set; } = new();
     public string? ActiveTab { get; set; }
+
+    public TabItemService(TestGeneration testGeneration)
+    {
+        _testGeneration = testGeneration;
+    }
 
     public void AddTab()
     {
@@ -30,20 +37,17 @@ public class TabItemService
 
     private TestState CreateState()
     {
-        var tests = new TestGeneration().GetSampleTests();
+        var tests = _testGeneration.GetSampleTests();
 
         return new TestState
         {
             Tests = tests,
-
             SelectedCheckbox = tests
                 .Select(t => t.TaskAnswers.Select(_ => false).ToList())
                 .ToList(),
-
             SelectedRadio = tests
                 .Select(_ => -1)
                 .ToList(),
-
             CurrentQuestion = 0,
             ShowResult = false,
             Score = 0

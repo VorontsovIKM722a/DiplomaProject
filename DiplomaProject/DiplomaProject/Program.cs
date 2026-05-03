@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using DiplomaProject.Services;
 
 var builder = WebApplication.CreateBuilder(args);
-builder.Services.AddSingleton<TestService>();
+
 builder.Services.AddScoped<TestGeneration>();
 builder.Services.AddScoped<TabItemService>();
 

@@ -7,6 +7,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddScoped<TestGeneration>();
 builder.Services.AddScoped<TabItemService>();
+builder.Services.AddSingleton<GeminiService>();
 
 // Add services to the container.
 builder.Services.AddRazorComponents()

@@ -1,0 +1,28 @@
+﻿@page "/gemini"
+@inject GeminiService GeminiService
+@rendermode InteractiveServer
+
+<h3>GeminiPage</h3>
+
+<button class="btn btn-primary" @onclick="Generate" disabled="@loading">
+    @(loading ? "Генерація..." : "Згенерувати")
+</button>
+
+@if (!string.IsNullOrEmpty(result))
+{
+    <pre>@result</pre>
+}
+
+@code {
+    private string result;
+    private bool loading;
+
+    private async Task Generate()
+    {
+        loading = true;
+
+        result = await GeminiService.Generate("Say hello");
+
+        loading = false;
+    }
+}

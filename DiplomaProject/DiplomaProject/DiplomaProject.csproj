@@ -9,6 +9,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\DiplomaProject.Client\DiplomaProject.Client.csproj" />
+    <PackageReference Include="Google_GenerativeAI" Version="3.6.6" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="10.0.6" />
   </ItemGroup>
 

@@ -9,7 +9,7 @@
       "applicationUrl": "http://localhost:5056",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development",
-        "Gemini__ApiKey": "AIzaSyApOyJoleKXUer1ybBo_MEKlG9yzt5J6No"
+        
       }
     },
     "https": {
@@ -20,7 +20,7 @@
       "applicationUrl": "https://localhost:7066;http://localhost:5056",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development",
-        "Gemini__ApiKey": "AIzaSyApOyJoleKXUer1ybBo_MEKlG9yzt5J6No"
+       
       }
     }
   }

@@ -361,3 +361,4 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+/DiplomaProject/DiplomaProject/Services/GeminiService.cs

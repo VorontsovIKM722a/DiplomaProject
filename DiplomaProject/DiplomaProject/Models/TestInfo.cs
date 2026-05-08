@@ -1,17 +1,25 @@
-﻿namespace DiplomaProject.Models
+﻿using System.Text.Json.Serialization;
+
+namespace DiplomaProject.Models
 {
     public class TestInfo
     {
+        [JsonPropertyName("taskDescription")]
         public string TaskDescription { get; set; }
-        public List<string> TaskAnswers { get; set; }
-        public List<int> CorrectAnswerIndexList { get; set; }
 
+        [JsonPropertyName("taskAnswers")]
+        public List<string> TaskAnswers { get; set; } = new();
 
-        public TestInfo(string taskDescription, List<string> taskAnswersList, List<int> correctAnswerIndexList)
+        [JsonPropertyName("correctAnswerIndexList")]
+        public List<int> CorrectAnswerIndexList { get; set; } = new();
+
+        public TestInfo() { }
+
+        public TestInfo(string taskDescription, List<string> taskAnswers, List<int> correctAnswerIndexList)
         {
             TaskDescription = taskDescription;
-            TaskAnswers = taskAnswersList;
-            CorrectAnswerIndexList = correctAnswerIndexList;
+            TaskAnswers = taskAnswers ?? new();
+            CorrectAnswerIndexList = correctAnswerIndexList ?? new();
         }
     }
 }

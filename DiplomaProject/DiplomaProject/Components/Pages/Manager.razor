@@ -29,13 +29,8 @@
                       Parameters="@GetParams(ActiveTabItem.Id)" />
 }
 @code {
-    Dictionary<string, object> GetParams(string id) =>
-    new()
-    {
-        { "InstanceId", id }
-    };
-    void AddTab()
-        => TabItemService.AddTab();
+    async Task AddTab()
+        => await TabItemService.AddTabAsync();
 
     void RemoveTab()
         => TabItemService.RemoveTab();
@@ -49,4 +44,10 @@
 
     TabItem? ActiveTabItem =>
         Tabs.FirstOrDefault(t => t.Id == ActiveTab);
+
+    Dictionary<string, object> GetParams(string id) =>
+        new()
+        {
+            { "InstanceId", id }
+        };
 }

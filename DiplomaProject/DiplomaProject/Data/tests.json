@@ -1,0 +1,52 @@
+[
+  {
+    "taskDescription": "Що таке HTML?",
+    "taskAnswers": [
+      "Мова розмітки для створення веб-сторінок",
+      "Мова програмування",
+      "Система керування базами даних",
+      "Операційна система"
+    ],
+    "correctAnswerIndexList": [ 0 ]
+  },
+  {
+    "taskDescription": "Який метод JavaScript використовується для виводу даних у консоль?",
+    "taskAnswers": [
+      "console.log()",
+      "print()",
+      "echo()",
+      "write()"
+    ],
+    "correctAnswerIndexList": [ 0 ]
+  },
+  {
+    "taskDescription": "Яка властивість CSS змінює колір тексту?",
+    "taskAnswers": [
+      "background-color",
+      "font-style",
+      "color",
+      "text-align"
+    ],
+    "correctAnswerIndexList": [ 2 ]
+  },
+  {
+    "taskDescription": "Що таке HTTP?",
+    "taskAnswers": [
+      "Протокол передачі гіпертексту",
+      "Мова програмування",
+      "База даних",
+      "Фреймворк"
+    ],
+    "correctAnswerIndexList": [ 0 ]
+  },
+  {
+    "taskDescription": "Який тег використовується для зображення в HTML?",
+    "taskAnswers": [
+      "<img>",
+      "<image>",
+      "<pic>",
+      "<src>"
+    ],
+    "correctAnswerIndexList": [ 0 ]
+  }
+]

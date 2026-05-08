@@ -4,112 +4,167 @@
 
 @inject TestGeneration TestGeneration
 @inject TabItemService TabItemService
+@inject GeminiTestGeneration GeminiTestGeneration //GeminiTestGenerationMock - підключає сервіс з локальними даними типу Json /   GeminiTestGeneration - сервіс з Gemini API //
+@inject TestEvaluationService EvaluationService
+
 @rendermode InteractiveServer
 
-<h3>TestPage</h3>
-
-<div style="height: 20px;"></div>
-
-@if (state?.Tests != null)
+@if (state == null)
 {
-    <div class="d-flex gap-2 flex-wrap">
-        @for (int i = 0; i < state.Tests.Count; i++)
-        {
-            var index = i;
-            <button class="btn @GetQuestionButtonClass(index)"
-                    @onclick="() => ButtonShowParticular(index)">
-                @(i + 1)
-            </button>
-        }
+    <div class="alert alert-warning">
+        Немає активної вкладки
     </div>
 }
-<div style="height: 20px;"></div>
-
-@if (state != null && state.Tests != null && state.CurrentQuestion < state.Tests.Count)
+else
 {
-    var tIndex = state.CurrentQuestion;
+    <h3>Test Generator</h3>
 
-    <div>
-        <h4>#@(tIndex + 1)</h4>
-        <h4>@state.Tests[tIndex].TaskDescription</h4>
+    <input class="form-control"
+           style="width:300px"
+           @bind="state.Topic"
+           placeholder="Введіть тему тесту:" />
 
-        @if (state.Tests[tIndex].CorrectAnswerIndexList.Count > 1)
-        {
-            <ul>
-                @for (int i = 0; i < state.Tests[tIndex].TaskAnswers.Count; i++)
-                {
-                    var iIndex = i;
+    <div style="height: 10px;"></div>
 
-                   
-                    <li style="@GetAnswerStyle(tIndex, iIndex)">
+    <InputNumber @bind-Value="state.Count"
+                 min="1"
+                 max="20"
+                 class="form-control"
+                 style="width:120px" />
 
-                        <input type="checkbox"
-                               checked="@state.SelectedCheckbox[tIndex][iIndex]"
-                               disabled="@state.ShowResult"
-                               @onchange="e => state.SelectedCheckbox[tIndex][iIndex] = (bool)e.Value" />
+    <div style="height: 10px;"></div>
 
-                        @state.Tests[tIndex].TaskAnswers[iIndex]
-                    </li>
-                }
-            </ul>
-        }
-        else
-        {
-            @for (int i = 0; i < state.Tests[tIndex].TaskAnswers.Count; i++)
+    <button class="btn btn-primary"
+            @onclick="Generate"
+            disabled="@state.IsGenerated">
+        Generate tests
+    </button>
+    @if (loading)
+    {
+        <div class="alert alert-info">
+            Генерація тестів...
+        </div>
+    }
+    
+   
+    <hr />
+
+    @if (state.Tests?.Any() == true)
+    {
+        <div class="d-flex gap-2 flex-wrap">
+            @for (int i = 0; i < state.Tests.Count; i++)
             {
-                var iIndex = i;
+                var index = i;
 
-                
-                <li style="@GetAnswerStyle(tIndex, iIndex)">
+                <button class="btn @EvaluationService.GetQuestionButtonClass(state, index)"
+                        @onclick="() => ButtonShowParticular(index)">
+                    @(i + 1)
+                </button>
+            }
+        </div>
 
-                    <input type="radio"
-                           name="q"
-                           checked="@(state.SelectedRadio[tIndex] == iIndex)"
-                           disabled="@state.ShowResult"
-                           @onchange="e => state.SelectedRadio[tIndex] = iIndex" />
+        <div style="height: 20px;"></div>
 
-                    @state.Tests[tIndex].TaskAnswers[iIndex]
-                </li>
+       
+        @if (state.CurrentQuestion < state.Tests.Count)
+        {
+            var tIndex = state.CurrentQuestion;
+
+            <h4>#@(tIndex + 1)</h4>
+            <h4>@state.Tests[tIndex].TaskDescription</h4>
+
+            @if ((state.Tests[tIndex].CorrectAnswerIndexList?.Count ?? 0) > 1)
+            {
+                <ul>
+                    @for (int i = 0; i < state.Tests[tIndex].TaskAnswers.Count; i++)
+                    {
+                        var iIndex = i;
+
+                        <li style="@EvaluationService.GetAnswerStyle(state, tIndex, iIndex)">
+                            <input type="checkbox"
+                                   checked="@state.SelectedCheckbox[tIndex][iIndex]"
+                                   disabled="@state.ShowResult"
+                                   @onchange="e => state.SelectedCheckbox[tIndex][iIndex] = (bool)e.Value" />
+
+                            @state.Tests[tIndex].TaskAnswers[iIndex]
+                        </li>
+                    }
+                </ul>
+            }
+            else
+            {
+                <ul>
+                    @for (int i = 0; i < state.Tests[tIndex].TaskAnswers.Count; i++)
+                    {
+                        var iIndex = i;
+
+                        <li style="@EvaluationService.GetAnswerStyle(state, tIndex, iIndex)">
+                            <input type="radio"
+                                   name="q"
+                                   checked="@(state.SelectedRadio[tIndex] == iIndex)"
+                                   disabled="@state.ShowResult"
+                                   @onchange="e => state.SelectedRadio[tIndex] = iIndex" />
+
+                            @state.Tests[tIndex].TaskAnswers[iIndex]
+                        </li>
+                    }
+                </ul>
             }
         }
-    </div>
-}
 
-@if (state != null && state.Tests != null && state.CurrentQuestion >= state.Tests.Count)
-{
-    <div>
-        <button class="btn btn-primary" @onclick="ButtonCheck">
-            Check your answers
-        </button>
-    </div>
+        @if (state.CurrentQuestion >= state.Tests.Count)
+        {
+            <div>
+                <button class="btn btn-primary" @onclick="ButtonCheck">
+                    Check your answers
+                </button>
+            </div>
 
-    @if (state.ShowResult)
-    {
-        <h4>Result: @state.Score / @state.Tests.Count</h4>
+            @if (state.ShowResult)
+            {
+                <h4>Result: @state.Score / @state.Tests.Count</h4>
+            }
+        }
+
+        <div style="height: 75px;"></div>
+
+        <div style="position: fixed; bottom: 20px; left: 275px;">
+            <button class="btn btn-primary" @onclick="ButtonBack">
+                Previous question
+            </button>
+        </div>
+
+        <div style="position: fixed; bottom: 20px; left: 475px;">
+            <button class="btn btn-primary" @onclick="ButtonNext">
+                Next question
+            </button>
+        </div>
+
+        <div style="height: 500px;"></div>
+        <h5>Raw Gemini Response:</h5>
+       
+       
     }
+   @if (!string.IsNullOrWhiteSpace(state.RawResponse))
+{
+    <div class="card p-2 mb-3">
+        <h6>Raw Response</h6>
+
+        <pre style="background:#111; color:#0f0; padding:10px; white-space:pre-wrap;">
+            @state.RawResponse
+        </pre>
+    </div>
 }
-
-<div style="height: 20px;"></div>
-
-
-
-<div style="position: fixed; bottom: 20px; left: 275px;">
-    <button class="btn btn-primary" @onclick="ButtonBack">
-        Previous question
-    </button>
-</div>
-
-<div style="position: fixed; bottom: 20px; left: 475px;">
-    <button class="btn btn-primary" @onclick="ButtonNext">
-        Next question
-    </button>
-</div>
-
+    
+}
 
 @code {
+    private bool loading;
     TestState state;
+
     [Parameter]
     public string InstanceId { get; set; }
+
     protected override void OnParametersSet()
     {
         var tab = TabItemService.Tabs
@@ -118,99 +173,86 @@
         state = tab?.State;
     }
 
-    bool IsAnswered(int t)
+    private async Task Generate()
     {
-        if (state.Tests[t].CorrectAnswerIndexList.Count == 1)
-            return state.SelectedRadio[t] != -1;
+        if (state == null)
+            return;
 
-        return state.SelectedCheckbox[t].Any(x => x);
-    }
+        if (string.IsNullOrWhiteSpace(state.Topic))
+            return;
 
-    bool IsCorrect(int t)
-    {
-        if (state.Tests[t].CorrectAnswerIndexList.Count == 1)
-            return state.SelectedRadio[t] == state.Tests[t].CorrectAnswerIndexList[0];
+        if (state.Count <= 0)
+            state.Count = 5;
 
-        for (int i = 0; i < state.Tests[t].TaskAnswers.Count; i++)
+        if (state.Count > 20)
+            state.Count = 20;
+
+        loading = true;
+
+        try
         {
-            bool mustBeChecked = state.Tests[t].CorrectAnswerIndexList.Contains(i);
+            var result = await GeminiTestGeneration.GenerateTests(
+                state.Topic,
+                state.Count
+            );
+            state.RawResponse = result.RawJson;
 
-            if (state.SelectedCheckbox[t][i] != mustBeChecked)
-                return false;
+            state.Tests = result.Tests ?? new();
+
+            state.SelectedCheckbox = state.Tests
+                .Select(t => (t.TaskAnswers ?? new()).Select(_ => false).ToList())
+                .ToList();
+
+            state.SelectedRadio = state.Tests
+                .Select(_ => -1)
+                .ToList();
+
+            state.CurrentQuestion = 0;
+            state.ShowResult = false;
+            state.Score = 0;
+
+            state.IsGenerated = true;
+
+            var tab = TabItemService.Tabs
+                .FirstOrDefault(t => t.Id == InstanceId);
+
+            if (tab != null)
+            {
+                tab.Title = state.Topic;
+                tab.IsCompleted = false;
+            }
+        }
+        finally
+        {
+            loading = false;
         }
 
-        return true;
+        StateHasChanged();
     }
-
-   
-    string GetQuestionButtonClass(int index)
-    {
-        if (state.ShowResult)
-            return IsCorrect(index) ? "btn-success" : "btn-danger";
-
-        if (state.CurrentQuestion == index)
-            return "btn-primary";
-
-        if (IsAnswered(index))
-            return "btn-success";
-
-        return "btn-outline-secondary";
-    }
-
-    
-    string GetAnswerStyle(int tIndex, int iIndex)
-    {
-        if (!state.ShowResult)
-            return "";
-
-        if (state.Tests[tIndex].CorrectAnswerIndexList.Contains(iIndex))
-            return "color: green;";
-
-        if (state.Tests[tIndex].CorrectAnswerIndexList.Count == 1)
-        {
-            return state.SelectedRadio[tIndex] == iIndex ? "color: red;" : "";
-        }
-
-        return state.SelectedCheckbox[tIndex][iIndex] ? "color: red;" : "";
-    }
-    
     private void ButtonCheck()
     {
-        state.Score = 0;
-
-        for (int t = 0; t < state.Tests.Count; t++)
-        {
-            if (IsCorrect(t))
-                state.Score++;
-        }
-
+        state.Score = EvaluationService.CalculateScore(state);
         state.ShowResult = true;
 
-       
         var tab = TabItemService.Tabs
             .FirstOrDefault(t => t.Id == InstanceId);
 
         if (tab != null)
-        {
             tab.IsCompleted = true;
-        }
-    }
 
+        StateHasChanged();
+    }
 
     private void ButtonNext()
     {
         if (state.CurrentQuestion < state.Tests.Count)
-        {
             state.CurrentQuestion++;
-        }
     }
 
     private void ButtonBack()
     {
         if (state.CurrentQuestion > 0)
-        {
             state.CurrentQuestion--;
-        }
     }
 
     private void ButtonShowParticular(int index)

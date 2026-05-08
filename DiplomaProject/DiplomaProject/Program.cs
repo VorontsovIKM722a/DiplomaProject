@@ -7,7 +7,10 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddScoped<TestGeneration>();
 builder.Services.AddScoped<TabItemService>();
-builder.Services.AddSingleton<GeminiService>();
+builder.Services.AddSingleton<TestEvaluationService>();
+
+builder.Services.AddSingleton<GeminiTestGeneration>();
+builder.Services.AddSingleton<GeminiTestGenerationMock>();
 
 // Add services to the container.
 builder.Services.AddRazorComponents()

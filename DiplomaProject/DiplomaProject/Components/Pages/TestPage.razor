@@ -4,8 +4,9 @@
 
 @inject TestGeneration TestGeneration
 @inject TabItemService TabItemService
-@inject GeminiTestGeneration GeminiTestGeneration //GeminiTestGenerationMock - підключає сервіс з локальними даними типу Json /   GeminiTestGeneration - сервіс з Gemini API //
+@inject GeminiTestGeneration GeminiTestGeneration
 @inject TestEvaluationService EvaluationService
+@inject JsonDataService JsonDataService
 
 @rendermode InteractiveServer
 
@@ -19,34 +20,56 @@ else
 {
     <h3>Test Generator</h3>
 
-    <input class="form-control"
-           style="width:300px"
-           @bind="state.Topic"
-           placeholder="Введіть тему тесту:" />
+    <div class="form-check mb-3">
+        <input class="form-check-input"
+               type="checkbox"
+               @bind="state.UseJsonInput" />
 
-    <div style="height: 10px;"></div>
+        <label class="form-check-label">
+            Використати власний JSON
+        </label>
+    </div>
 
-    <InputNumber @bind-Value="state.Count"
-                 min="1"
-                 max="20"
-                 class="form-control"
-                 style="width:120px" />
+    @if (state.UseJsonInput)
+    {
+        <InputTextArea class="form-control"
+                       style="height:300px"
+                       @bind-Value="state.UserJson" />
 
-    <div style="height: 10px;"></div>
+        <div style="height: 10px;"></div>
+    }
+
+    else
+    {
+        <input class="form-control"
+               style="width:300px"
+               @bind="state.Topic"
+               placeholder="Введіть тему тесту:" />
+
+        <div style="height: 10px;"></div>
+
+        <InputNumber @bind-Value="state.Count"
+                     min="1"
+                     max="20"
+                     class="form-control"
+                     style="width:120px" />
+
+        <div style="height: 10px;"></div>
+    }
 
     <button class="btn btn-primary"
             @onclick="Generate"
             disabled="@state.IsGenerated">
         Generate tests
     </button>
+
     @if (loading)
     {
         <div class="alert alert-info">
             Генерація тестів...
         </div>
     }
-    
-   
+
     <hr />
 
     @if (state.Tests?.Any() == true)
@@ -65,7 +88,6 @@ else
 
         <div style="height: 20px;"></div>
 
-       
         @if (state.CurrentQuestion < state.Tests.Count)
         {
             var tIndex = state.CurrentQuestion;
@@ -141,25 +163,26 @@ else
         </div>
 
         <div style="height: 500px;"></div>
-        <h5>Raw Gemini Response:</h5>
-       
-       
-    }
-   @if (!string.IsNullOrWhiteSpace(state.RawResponse))
-{
-    <div class="card p-2 mb-3">
-        <h6>Raw Response</h6>
 
-        <pre style="background:#111; color:#0f0; padding:10px; white-space:pre-wrap;">
-            @state.RawResponse
-        </pre>
-    </div>
-}
-    
+        <h5>Raw Gemini Response:</h5>
+    }
+
+    @if (!string.IsNullOrWhiteSpace(state.RawResponse))
+    {
+        <div class="card p-2 mb-3">
+            <h6>Raw Response</h6>
+
+            <pre style="background:#111; color:#0f0; padding:10px; white-space:pre-wrap;">
+                @state.RawResponse
+            </pre>
+        </div>
+    }
 }
 
 @code {
+
     private bool loading;
+
     TestState state;
 
     [Parameter]
@@ -178,23 +201,41 @@ else
         if (state == null)
             return;
 
-        if (string.IsNullOrWhiteSpace(state.Topic))
-            return;
-
-        if (state.Count <= 0)
-            state.Count = 5;
-
-        if (state.Count > 20)
-            state.Count = 20;
-
         loading = true;
 
         try
         {
-            var result = await GeminiTestGeneration.GenerateTests(
-                state.Topic,
-                state.Count
-            );
+            GeminiResult result;
+
+            if (state.UseJsonInput)
+            {
+                var tests = JsonDataService
+                    .DeserializeTests(state.UserJson);
+
+                result = new GeminiResult
+                {
+                    Tests = tests,
+                    RawJson = state.UserJson
+                };
+            }
+
+            else
+            {
+                if (string.IsNullOrWhiteSpace(state.Topic))
+                    return;
+
+                if (state.Count <= 0)
+                    state.Count = 5;
+
+                if (state.Count > 20)
+                    state.Count = 20;
+
+                result = await GeminiTestGeneration.GenerateTests(
+                    state.Topic,
+                    state.Count
+                );
+            }
+
             state.RawResponse = result.RawJson;
 
             state.Tests = result.Tests ?? new();
@@ -218,7 +259,10 @@ else
 
             if (tab != null)
             {
-                tab.Title = state.Topic;
+                tab.Title = state.UseJsonInput
+                    ? "Custom JSON Test"
+                    : state.Topic;
+
                 tab.IsCompleted = false;
             }
         }
@@ -229,6 +273,7 @@ else
 
         StateHasChanged();
     }
+
     private void ButtonCheck()
     {
         state.Score = EvaluationService.CalculateScore(state);

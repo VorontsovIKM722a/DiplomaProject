@@ -17,4 +17,8 @@ public class TestState
 
     public bool IsGenerated { get; set; }
     public string RawResponse { get; set; }
+  
+    public bool UseJsonInput { get; set; }
+
+    public string UserJson { get; set; } = "";
 }

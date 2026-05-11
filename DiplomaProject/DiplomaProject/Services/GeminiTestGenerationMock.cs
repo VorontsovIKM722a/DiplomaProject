@@ -1,47 +1,31 @@
 ﻿using DiplomaProject.Models;
-using System.Text.Json;
 
 public class GeminiTestGenerationMock
 {
-    private readonly IWebHostEnvironment _env;
+    private readonly JsonDataService _jsonService;
 
-    public GeminiTestGenerationMock(IWebHostEnvironment env)
+    public GeminiTestGenerationMock(JsonDataService jsonService)
     {
-        _env = env;
+        _jsonService = jsonService;
     }
 
     public async Task<GeminiResult> GenerateTests(string topic, int count)
     {
         try
         {
-            var path = Path.Combine(Directory.GetCurrentDirectory(), "Data", "tests.json");
-
-            Console.WriteLine($"MOCK PATH: {path}");
             Console.WriteLine($"TOPIC: {topic}");
             Console.WriteLine($"COUNT: {count}");
 
-            if (!File.Exists(path))
-            {
-                return new GeminiResult
-                {
-                    Tests = new List<TestInfo>(),
-                    RawJson = "FILE NOT FOUND: " + path
-                };
-            }
+            var json = await _jsonService.GetRawJson();
 
-            var json = await File.ReadAllTextAsync(path);
+            Console.WriteLine("RAW JSON FROM MOCK:");
+            Console.WriteLine(json);
 
-            var options = new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true
-            };
-
-            var allTests = JsonSerializer.Deserialize<List<TestInfo>>(json, options)
-                           ?? new List<TestInfo>();
-
-            var tests = allTests
+            var tests = _jsonService
+                .DeserializeTests(json)
                 .Take(count)
                 .ToList();
+
             return new GeminiResult
             {
                 Tests = tests,

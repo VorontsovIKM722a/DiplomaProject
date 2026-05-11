@@ -1,15 +1,16 @@
 ﻿using DiplomaProject.Models;
 using Google.GenAI;
 using Google.GenAI.Types;
-using System.Text.Json;
 
 public class GeminiTestGeneration
 {
     private readonly Client _client;
+    private readonly JsonDataService _jsonService;
 
-    public GeminiTestGeneration()
+    public GeminiTestGeneration(JsonDataService jsonService)
     {
         _client = new Client();
+        _jsonService = jsonService;
     }
 
     public async Task<GeminiResult> GenerateTests(string topic, int count)
@@ -19,8 +20,11 @@ public class GeminiTestGeneration
             if (string.IsNullOrWhiteSpace(topic))
                 topic = "загальні знання";
 
-            if (count <= 0) count = 5;
-            if (count > 20) count = 20;
+            if (count <= 0)
+                count = 5;
+
+            if (count > 20)
+                count = 20;
 
             var prompt = $$"""
                 Згенеруй {{count}} тестових питань по темі: {{topic}}.
@@ -42,6 +46,7 @@ public class GeminiTestGeneration
                 рівно {{count}} питань
                 кілька завдань мають бути з кількома правильними відповідями
                 """;
+
             var response = await _client.Models.GenerateContentAsync(
                 model: "gemini-2.5-flash",
                 contents: prompt,
@@ -51,12 +56,12 @@ public class GeminiTestGeneration
                 }
             );
 
-            var json = ExtractJson(response);
+            var json = _jsonService.ExtractJson(response);
 
             Console.WriteLine("RAW JSON FROM GEMINI:");
             Console.WriteLine(json);
 
-            var tests = Deserialize(json);
+            var tests = _jsonService.DeserializeTests(json);
 
             return new GeminiResult
             {
@@ -71,41 +76,6 @@ public class GeminiTestGeneration
                 Tests = new List<TestInfo>(),
                 RawJson = $"ERROR: {ex.Message}"
             };
-        }
-    }
-
-    private string ExtractJson(dynamic response)
-    {
-        return response?.Candidates?[0]?.Content?.Parts?[0]?.Text ?? "";
-    }
-
-    private List<TestInfo> Deserialize(string json)
-    {
-        try
-        {
-            if (string.IsNullOrWhiteSpace(json))
-                return new List<TestInfo>();
-
-            var options = new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true
-            };
-
-            var tests = JsonSerializer.Deserialize<List<TestInfo>>(json, options);
-
-            return tests?.Select(t => new TestInfo(
-                t.TaskDescription ?? "",
-                t.TaskAnswers ?? new List<string>(),
-                t.CorrectAnswerIndexList ?? new List<int>()
-            )).ToList()
-            ?? new List<TestInfo>();
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine("PARSE ERROR: " + ex.Message);
-            Console.WriteLine(json);
-
-            return new List<TestInfo>();
         }
     }
 }

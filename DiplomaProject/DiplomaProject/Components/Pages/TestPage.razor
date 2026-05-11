@@ -32,6 +32,11 @@ else
 
     @if (state.UseJsonInput)
     {
+        <input class="form-control"
+               style="width:300px; margin-bottom:10px;"
+               @bind="state.Topic"
+               placeholder="Введіть тему тесту:" />
+
         <InputTextArea class="form-control"
                        style="height:300px"
                        @bind-Value="state.UserJson" />
@@ -182,7 +187,6 @@ else
 @code {
 
     private bool loading;
-
     TestState state;
 
     [Parameter]
@@ -201,29 +205,32 @@ else
         if (state == null)
             return;
 
+        if (string.IsNullOrWhiteSpace(state.Topic))
+        {
+            state.RawResponse = "ПОМИЛКА: введіть тему тесту";
+            return;
+        }
+
         loading = true;
 
         try
         {
             GeminiResult result;
-
             if (state.UseJsonInput)
             {
-                var tests = JsonDataService
-                    .DeserializeTests(state.UserJson);
+                var tests = JsonDataService.DeserializeTests(state.UserJson);
 
                 result = new GeminiResult
                 {
                     Tests = tests,
                     RawJson = state.UserJson
                 };
-            }
 
+                state.UseJsonInput = false;
+                state.UserJson = "";
+            }
             else
             {
-                if (string.IsNullOrWhiteSpace(state.Topic))
-                    return;
-
                 if (state.Count <= 0)
                     state.Count = 5;
 
@@ -236,35 +243,12 @@ else
                 );
             }
 
-            state.RawResponse = result.RawJson;
-
-            state.Tests = result.Tests ?? new();
-
-            state.SelectedCheckbox = state.Tests
-                .Select(t => (t.TaskAnswers ?? new()).Select(_ => false).ToList())
-                .ToList();
-
-            state.SelectedRadio = state.Tests
-                .Select(_ => -1)
-                .ToList();
-
-            state.CurrentQuestion = 0;
-            state.ShowResult = false;
-            state.Score = 0;
-
-            state.IsGenerated = true;
-
-            var tab = TabItemService.Tabs
-                .FirstOrDefault(t => t.Id == InstanceId);
-
-            if (tab != null)
+            ApplyTests(result);
+            UpdateTab(tab =>
             {
-                tab.Title = state.UseJsonInput
-                    ? "Custom JSON Test"
-                    : state.Topic;
-
+                tab.Title = state.Topic;
                 tab.IsCompleted = false;
-            }
+            });
         }
         finally
         {
@@ -274,16 +258,38 @@ else
         StateHasChanged();
     }
 
+    private void ApplyTests(GeminiResult result)
+    {
+        state.RawResponse = result.RawJson;
+        state.Tests = result.Tests ?? new();
+
+        state.SelectedCheckbox = state.Tests
+            .Select(t => (t.TaskAnswers ?? new()).Select(_ => false).ToList())
+            .ToList();
+
+        state.SelectedRadio = state.Tests
+            .Select(_ => -1)
+            .ToList();
+
+        state.CurrentQuestion = 0;
+        state.ShowResult = false;
+        state.Score = 0;
+    }
+    private void UpdateTab(Action<TabItem> action)
+    {
+        var tab = TabItemService.Tabs
+            .FirstOrDefault(t => t.Id == InstanceId);
+
+        if (tab != null)
+            action(tab);
+    }
+
     private void ButtonCheck()
     {
         state.Score = EvaluationService.CalculateScore(state);
         state.ShowResult = true;
 
-        var tab = TabItemService.Tabs
-            .FirstOrDefault(t => t.Id == InstanceId);
-
-        if (tab != null)
-            tab.IsCompleted = true;
+        UpdateTab(tab => tab.IsCompleted = true);
 
         StateHasChanged();
     }

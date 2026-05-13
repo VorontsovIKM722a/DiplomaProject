@@ -4,116 +4,156 @@
 
 @inject TestGeneration TestGeneration
 @inject TabItemService TabItemService
-@inject GeminiTestGeneration GeminiTestGeneration
+@inject GeminiTestGenerationMock GeminiTestGeneration  //GeminiTestGenerationMock - підключає сервіс з локальними даними типу Json /   GeminiTestGeneration - сервіс з Gemini API //
+@inject GeminiPdfService GeminiPdfService
 @inject TestEvaluationService EvaluationService
 @inject JsonDataService JsonDataService
 
 @rendermode InteractiveServer
 
-@if (state == null)
-{
-    <div class="alert alert-warning">
-        Немає активної вкладки
-    </div>
-}
-else
+@if (!state.IsGenerated)
 {
     <h3>Test Generator</h3>
 
-    <div class="form-check mb-3">
-        <input class="form-check-input"
-               type="checkbox"
-               @bind="state.UseJsonInput" />
+   //перемикання між режимами генерації
+    <div class="btn-group mb-3">
+        <button class="btn btn-outline-primary"
+                @onclick="() => SetMode(GenerationMode.Topic)">
+            Topic
+        </button>
 
-        <label class="form-check-label">
-            Використати власний JSON
-        </label>
+        <button class="btn btn-outline-primary"
+                @onclick="() => SetMode(GenerationMode.Json)">
+            JSON
+        </button>
+
+        <button class="btn btn-outline-primary"
+                @onclick="() => SetMode(GenerationMode.Pdf)">
+            PDF
+        </button>
     </div>
 
-    @if (state.UseJsonInput)
+    //режим за темою
+    @if (state.Mode == GenerationMode.Topic)
     {
-        <input class="form-control"
-               style="width:300px; margin-bottom:10px;"
+        <input class="form-control mb-2"
                @bind="state.Topic"
-               placeholder="Введіть тему тесту:" />
+               @oninput="OnInputChanged"
+               placeholder="Введіть тему тесту" />
 
-        <InputTextArea class="form-control"
-                       style="height:300px"
-                       @bind-Value="state.UserJson" />
+        <textarea class="form-control mb-2"
+                  style="height:120px"
+                  @bind="state.Instructions"
+                  @oninput="OnInputChanged"
+                      placeholder="Інструкції для генерації тестів">
+        </textarea>
 
-        <div style="height: 10px;"></div>
-    }
+            <label class="form-label">Кількість завдань</label>
 
-    else
-    {
-        <input class="form-control"
-               style="width:300px"
-               @bind="state.Topic"
-               placeholder="Введіть тему тесту:" />
+            <InputNumber @bind-Value="state.Count"
+                         @oninput="OnInputChanged"
+                         min="1" max="20"
+                         class="form-control mb-2"
+                         style="width:120px" />
+        }
 
-        <div style="height: 10px;"></div>
-
-        <InputNumber @bind-Value="state.Count"
-                     min="1"
-                     max="20"
-                     class="form-control"
-                     style="width:120px" />
-
-        <div style="height: 10px;"></div>
-    }
-
-    <button class="btn btn-primary"
-            @onclick="Generate"
-            disabled="@state.IsGenerated">
-        Generate tests
-    </button>
-
-    @if (loading)
-    {
-        <div class="alert alert-info">
-            Генерація тестів...
-        </div>
-    }
-
-    <hr />
-
-    @if (state.Tests?.Any() == true)
-    {
-        <div class="d-flex gap-2 flex-wrap">
-            @for (int i = 0; i < state.Tests.Count; i++)
-            {
-                var index = i;
-
-                <button class="btn @EvaluationService.GetQuestionButtonClass(state, index)"
-                        @onclick="() => ButtonShowParticular(index)">
-                    @(i + 1)
-                </button>
-            }
-        </div>
-
-        <div style="height: 20px;"></div>
-
-        @if (state.CurrentQuestion < state.Tests.Count)
+        //режим Json
+        @if (state.Mode == GenerationMode.Json)
         {
-            var tIndex = state.CurrentQuestion;
+            <input class="form-control mb-2"
+                   @bind="state.Topic"
+                   @oninput="OnInputChanged"
+                   placeholder="Назва тесту" />
 
-            <h4>#@(tIndex + 1)</h4>
-            <h4>@state.Tests[tIndex].TaskDescription</h4>
+            <InputTextArea class="form-control mb-2"
+                           style="height:250px"
+                           @bind-Value="state.UserJson"
+                           @oninput="OnInputChanged" />
+        }
 
-            @if ((state.Tests[tIndex].CorrectAnswerIndexList?.Count ?? 0) > 1)
+        //режим PDF
+        @if (state.Mode == GenerationMode.Pdf)
+        {
+            <input class="form-control mb-2"
+                   @bind="state.Topic"
+                   @oninput="OnInputChanged"
+                   placeholder="Назва тесту" />
+
+            <textarea class="form-control mb-2"
+                      style="height:120px"
+                      @bind="state.Instructions"
+                      @oninput="OnInputChanged"
+                          placeholder="Інструкції для аналізу PDF">
+        </textarea>
+
+                <label class="form-label">Кількість завдань</label>
+
+                <InputNumber @bind-Value="state.Count"
+                             @oninput="OnInputChanged"
+                             min="1" max="20"
+                             class="form-control mb-2"
+                             style="width:120px" />
+
+                <InputFile OnChange="OnPdfSelected" class="mb-2" />
+
+                @if (!string.IsNullOrEmpty(state.PdfPath))
+                {
+                    <div class="alert alert-success">
+                        PDF завантажено
+                    </div>
+                }
+            }
+
+            <button class="btn btn-primary"
+                    @onclick="Generate"
+                    disabled="@(!CanGenerate)">
+                Generate tests
+            </button>
+
+            @if (loading)
+            {
+                <div class="alert alert-info mt-2">
+                    Генерація...
+                </div>
+            }
+
+            <hr />
+        }
+
+        
+  
+        @if (state.Tests?.Any() == true)
+        {
+            <div class="d-flex gap-2 flex-wrap">
+                @for (int i = 0; i < state.Tests.Count; i++)
+                {
+                    var index = i;
+
+                    <button class="btn @EvaluationService.GetQuestionButtonClass(state, index)"
+                            @onclick="() => ButtonShowParticular(index)">
+                        @(i + 1)
+                    </button>
+                }
+            </div>
+
+            <div style="height: 20px;"></div>
+
+            <h4>#@(state.CurrentQuestion + 1)</h4>
+            <h4>@state.Tests[state.CurrentQuestion].TaskDescription</h4>
+
+            @if ((state.Tests[state.CurrentQuestion].CorrectAnswerIndexList?.Count ?? 0) > 1)
             {
                 <ul>
-                    @for (int i = 0; i < state.Tests[tIndex].TaskAnswers.Count; i++)
+                    @for (int i = 0; i < state.Tests[state.CurrentQuestion].TaskAnswers.Count; i++)
                     {
                         var iIndex = i;
 
-                        <li style="@EvaluationService.GetAnswerStyle(state, tIndex, iIndex)">
+                        <li>
                             <input type="checkbox"
-                                   checked="@state.SelectedCheckbox[tIndex][iIndex]"
-                                   disabled="@state.ShowResult"
-                                   @onchange="e => state.SelectedCheckbox[tIndex][iIndex] = (bool)e.Value" />
+                                   checked="@state.SelectedCheckbox[state.CurrentQuestion][iIndex]"
+                                   @onchange="e => state.SelectedCheckbox[state.CurrentQuestion][iIndex] = (bool)e.Value" />
 
-                            @state.Tests[tIndex].TaskAnswers[iIndex]
+                            @state.Tests[state.CurrentQuestion].TaskAnswers[iIndex]
                         </li>
                     }
                 </ul>
@@ -121,142 +161,170 @@ else
             else
             {
                 <ul>
-                    @for (int i = 0; i < state.Tests[tIndex].TaskAnswers.Count; i++)
+                    @for (int i = 0; i < state.Tests[state.CurrentQuestion].TaskAnswers.Count; i++)
                     {
                         var iIndex = i;
 
-                        <li style="@EvaluationService.GetAnswerStyle(state, tIndex, iIndex)">
+                        <li>
                             <input type="radio"
                                    name="q"
-                                   checked="@(state.SelectedRadio[tIndex] == iIndex)"
-                                   disabled="@state.ShowResult"
-                                   @onchange="e => state.SelectedRadio[tIndex] = iIndex" />
+                                   checked="@(state.SelectedRadio[state.CurrentQuestion] == iIndex)"
+                                   @onchange="e => state.SelectedRadio[state.CurrentQuestion] = iIndex" />
 
-                            @state.Tests[tIndex].TaskAnswers[iIndex]
+                            @state.Tests[state.CurrentQuestion].TaskAnswers[iIndex]
                         </li>
                     }
                 </ul>
             }
-        }
 
-        @if (state.CurrentQuestion >= state.Tests.Count)
-        {
-            <div>
-                <button class="btn btn-primary" @onclick="ButtonCheck">
-                    Check your answers
-                </button>
+            <div class="mt-3">
+                @if (IsLastQuestion)
+                {
+                    <button class="btn btn-primary" @onclick="ButtonCheck">
+                        Check answers
+                    </button>
+                }
+
+                @if (state.ShowResult)
+                {
+                    <h4>Result: @state.Score / @state.Tests.Count</h4>
+                }
             </div>
 
-            @if (state.ShowResult)
-            {
-                <h4>Result: @state.Score / @state.Tests.Count</h4>
-            }
+            <div style="height: 50px;"></div>
+
+            <div class="d-flex gap-2 mt-3">
+                <button class="btn btn-secondary" @onclick="ButtonBack">Back</button>
+                <button class="btn btn-secondary" @onclick="ButtonNext">Next</button>
+            </div>
         }
 
-        <div style="height: 75px;"></div>
+        @if (!string.IsNullOrWhiteSpace(state.RawResponse))
+        {
+            <hr />
+            <pre style="background:#111;color:#0f0;padding:10px;white-space:pre-wrap;">
+@state.RawResponse
+        </pre>
+        }
+    
 
-        <div style="position: fixed; bottom: 20px; left: 275px;">
-            <button class="btn btn-primary" @onclick="ButtonBack">
-                Previous question
-            </button>
-        </div>
-
-        <div style="position: fixed; bottom: 20px; left: 475px;">
-            <button class="btn btn-primary" @onclick="ButtonNext">
-                Next question
-            </button>
-        </div>
-
-        <div style="height: 500px;"></div>
-
-        <h5>Raw Gemini Response:</h5>
-    }
-
-    @if (!string.IsNullOrWhiteSpace(state.RawResponse))
-    {
-        <div class="card p-2 mb-3">
-            <h6>Raw Response</h6>
-
-            <pre style="background:#111; color:#0f0; padding:10px; white-space:pre-wrap;">
-                @state.RawResponse
-            </pre>
-        </div>
-    }
-}
 
 @code {
 
+    
     private bool loading;
-    TestState state;
+    private TestState state;
+    private bool IsLastQuestion =>
+    state != null &&
+    state.Tests != null &&
+    state.CurrentQuestion == state.Tests.Count - 1;
 
     [Parameter]
     public string InstanceId { get; set; }
 
     protected override void OnParametersSet()
     {
-        var tab = TabItemService.Tabs
-            .FirstOrDefault(t => t.Id == InstanceId);
-
+        var tab = TabItemService.Tabs.FirstOrDefault(t => t.Id == InstanceId);
         state = tab?.State;
     }
 
+    private bool CanGenerate =>
+        state != null &&
+        !loading &&
+        state.Mode switch
+        {
+            GenerationMode.Topic =>
+                !string.IsNullOrWhiteSpace(state.Topic),
+
+            GenerationMode.Json =>
+                !string.IsNullOrWhiteSpace(state.UserJson),
+
+            GenerationMode.Pdf =>
+                !string.IsNullOrWhiteSpace(state.Topic)
+                && !string.IsNullOrWhiteSpace(state.Instructions)
+                && !string.IsNullOrWhiteSpace(state.PdfPath)
+                && File.Exists(state.PdfPath),
+
+            _ => false
+        };
+
     private async Task Generate()
     {
-        if (state == null)
+        if (state == null || loading)
             return;
-
-        if (string.IsNullOrWhiteSpace(state.Topic))
-        {
-            state.RawResponse = "ПОМИЛКА: введіть тему тесту";
-            return;
-        }
 
         loading = true;
+        state.IsGenerated = false;
 
         try
         {
             GeminiResult result;
-            if (state.UseJsonInput)
+
+            switch (state.Mode)
             {
-                var tests = JsonDataService.DeserializeTests(state.UserJson);
+                case GenerationMode.Topic:
+                    result = await GeminiTestGeneration.GenerateTests(
+                        state.Topic,
+                        Clamp(state.Count),
+                        state.Instructions
+                    );
+                    break;
 
-                result = new GeminiResult
-                {
-                    Tests = tests,
-                    RawJson = state.UserJson
-                };
+                case GenerationMode.Json:
+                    result = new GeminiResult
+                    {
+                        Tests = JsonDataService.DeserializeTests(state.UserJson),
+                        RawJson = state.UserJson
+                    };
+                    break;
 
-                state.UseJsonInput = false;
-                state.UserJson = "";
-            }
-            else
-            {
-                if (state.Count <= 0)
-                    state.Count = 5;
+                case GenerationMode.Pdf:
+                    result = await GeminiPdfService.GenerateTestsFromPdf(
+                        state.PdfPath,
+                        Clamp(state.Count),
+                        state.Instructions);
+                    break;
 
-                if (state.Count > 20)
-                    state.Count = 20;
-
-                result = await GeminiTestGeneration.GenerateTests(
-                    state.Topic,
-                    state.Count
-                );
+                default:
+                    return;
             }
 
             ApplyTests(result);
+
+            state.IsGenerated = true;
+
             UpdateTab(tab =>
             {
-                tab.Title = state.Topic;
+                tab.Title = GetTabTitle();
                 tab.IsCompleted = false;
             });
+        }
+        catch
+        {
+            state.IsGenerated = false;
         }
         finally
         {
             loading = false;
         }
-
-        StateHasChanged();
     }
+
+    
+    private string GetTabTitle()
+    {
+        if (!string.IsNullOrWhiteSpace(state.Topic))
+            return state.Topic;
+
+        return state.Mode switch
+        {
+            GenerationMode.Json => "JSON Test",
+            GenerationMode.Pdf => "PDF Test",
+            _ => "Test"
+        };
+    }
+
+    private int Clamp(int value)
+        => value is <= 0 ? 5 : value > 20 ? 20 : value;
 
     private void ApplyTests(GeminiResult result)
     {
@@ -275,13 +343,36 @@ else
         state.ShowResult = false;
         state.Score = 0;
     }
+
     private void UpdateTab(Action<TabItem> action)
     {
-        var tab = TabItemService.Tabs
-            .FirstOrDefault(t => t.Id == InstanceId);
-
+        var tab = TabItemService.Tabs.FirstOrDefault(t => t.Id == InstanceId);
         if (tab != null)
             action(tab);
+    }
+
+    private void OnInputChanged(ChangeEventArgs _)
+        => state.IsGenerated = false;
+
+    private async Task OnPdfSelected(InputFileChangeEventArgs e)
+    {
+        var file = e.File;
+
+        var path = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid()}_{file.Name}");
+
+        await using var fs = new FileStream(path, FileMode.Create);
+        await file.OpenReadStream(50 * 1024 * 1024).CopyToAsync(fs);
+
+        state.PdfPath = path;
+        state.IsGenerated = false;
+    }
+
+    private void SetMode(GenerationMode mode)
+    {
+        state.Mode = mode;
+        state.IsGenerated = false;
+        state.RawResponse = "";
+        loading = false;
     }
 
     private void ButtonCheck()
@@ -290,13 +381,11 @@ else
         state.ShowResult = true;
 
         UpdateTab(tab => tab.IsCompleted = true);
-
-        StateHasChanged();
     }
 
     private void ButtonNext()
     {
-        if (state.CurrentQuestion < state.Tests.Count)
+        if (state.CurrentQuestion < state.Tests.Count - 1)
             state.CurrentQuestion++;
     }
 

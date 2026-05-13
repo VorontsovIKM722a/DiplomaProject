@@ -58,3 +58,47 @@ h1:focus {
 .form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
     text-align: start;
 }
+.spotlight-container {
+    position: relative;
+    height: 100vh;
+    overflow: hidden;
+    background: #111;
+    color: white;
+}
+
+.content {
+    position: relative;
+    z-index: 1;
+    padding: 40px;
+}
+
+.sidebar {
+    width: 260px;
+    position: fixed;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    z-index: 10000;
+}
+
+.overlay {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 9999;
+
+    background:
+        linear-gradient(
+            to right,
+            transparent 0px,
+            transparent 260px,
+            rgba(0,0,0,0.95) 260px,
+            rgba(0,0,0,0.95) 100%
+        ),
+        radial-gradient(
+            circle 120px at var(--x) var(--y),
+            transparent 0%,
+            transparent 120px,
+            rgba(0,0,0,0.95) 160px
+        );
+}

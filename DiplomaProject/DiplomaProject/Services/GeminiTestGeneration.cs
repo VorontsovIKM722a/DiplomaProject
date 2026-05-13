@@ -13,7 +13,7 @@ public class GeminiTestGeneration
         _jsonService = jsonService;
     }
 
-    public async Task<GeminiResult> GenerateTests(string topic, int count)
+    public async Task<GeminiResult> GenerateTests(string topic, int count, string instructions)
     {
         try
         {
@@ -26,8 +26,23 @@ public class GeminiTestGeneration
             if (count > 20)
                 count = 20;
 
+            instructions ??= "";
+
             var prompt = $$"""
-                Згенеруй {{count}} тестових питань по темі: {{topic}}.
+                Ти генеруєш навчальні тести.
+
+                ТЕМА:
+                {{topic}}
+
+                КІЛЬКІСТЬ ПИТАНЬ:
+                {{count}}
+
+                ДОДАТКОВІ ІНСТРУКЦІЇ ВІД КОРИСТУВАЧА:
+                {{instructions}}
+
+                ----------------------------
+
+                Згенеруй {{count}} тестових питань.
 
                 Формат відповіді строго JSON:
 
@@ -39,12 +54,14 @@ public class GeminiTestGeneration
                   }
                 ]
 
-                Вимоги:
-                тільки JSON
-                без пояснень
-                без markdown
-                рівно {{count}} питань
-                кілька завдань мають бути з кількома правильними відповідями
+                ВИМОГИ:
+                - тільки JSON
+                - без пояснень
+                - без markdown
+                - рівно {{count}} питань
+                - варіанти відповідей мають бути реалістичні
+                - частина питань може мати кілька правильних відповідей
+                - складність залежить від інструкцій
                 """;
 
             var response = await _client.Models.GenerateContentAsync(

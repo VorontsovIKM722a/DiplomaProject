@@ -9,7 +9,7 @@ builder.Services.AddScoped<TestGeneration>();
 builder.Services.AddScoped<TabItemService>();
 builder.Services.AddSingleton<TestEvaluationService>();
 builder.Services.AddSingleton<JsonDataService>();
-
+builder.Services.AddSingleton<GeminiPdfService>();
 builder.Services.AddSingleton<GeminiTestGeneration>();
 builder.Services.AddSingleton<GeminiTestGenerationMock>();
 

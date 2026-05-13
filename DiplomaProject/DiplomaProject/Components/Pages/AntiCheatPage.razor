@@ -1,0 +1,54 @@
+﻿@page "/spotlight"
+
+@using DiplomaProject.Services
+@using DiplomaProject.Models
+
+@layout MainLayout
+@rendermode InteractiveServer
+
+<div class="spotlight-container"
+     @onmousemove="OnMouseMove">
+
+    <div class="content">
+        <h1>Spotlight test</h1>
+        <p>Рухай мишкою</p>
+
+        <label>Радіус: @radius px</label>
+
+        <input type="range"
+               min="50"
+               max="300"
+               step="10"
+               value="@radius"
+               @oninput="OnRadiusChanged" />
+    </div>
+
+    <div class="overlay"
+         style="@OverlayStyle">
+    </div>
+</div>
+@code {
+    private double x = 200;
+    private double y = 200;
+
+    private int radius = 120;
+
+    private string OverlayStyle =>
+        $"background: radial-gradient(circle {radius}px at {x}px {y}px, transparent 0%, transparent {radius}px, rgba(0,0,0,0.95) {radius + 40}px);";
+
+    private void OnMouseMove(MouseEventArgs e)
+    {
+        x = e.ClientX;
+        y = e.ClientY;
+
+        StateHasChanged();
+    }
+
+    private void OnRadiusChanged(ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out var value))
+        {
+            radius = value;
+        }
+    }
+}

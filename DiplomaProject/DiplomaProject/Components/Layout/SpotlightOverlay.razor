@@ -1,0 +1,22 @@
+﻿@using Microsoft.AspNetCore.Components.Web
+
+<div class="overlay"
+     style="@OverlayStyle"
+     @onmousemove="OnMouseMove">
+</div>
+
+@code {
+    [Parameter] public int Radius { get; set; } = 120;
+    [Parameter] public double X { get; set; }
+    [Parameter] public double Y { get; set; }
+
+    private string OverlayStyle =>
+        $"background: radial-gradient(circle {Radius}px at {X}px {Y}px, " +
+        $"transparent 0%, transparent {Radius}px, rgba(0,0,0,0.95) {Radius + 40}px);";
+
+    private void OnMouseMove(MouseEventArgs e)
+    {
+        X = e.ClientX;
+        Y = e.ClientY;
+    }
+}

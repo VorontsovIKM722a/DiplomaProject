@@ -1,34 +1,78 @@
 ﻿@page "/manager"
-@inject TabItemService TabItemService
 @using DiplomaProject.Models
+@using DiplomaProject.Services
+@inject SpotlightService SpotlightService
+@inject TabItemService TabItemService
+
 @rendermode InteractiveServer
-
-<button class="btn btn-primary" @onclick="AddTab">
-    + Нова вкладка
-</button>
-
-<button class="btn btn-primary" @onclick="RemoveTab">
-    - Видалити вкладку
-</button>
-
-<div style="margin-top:10px">
-    @foreach (var tab in Tabs)
+<div class="manager-container"
+     @onmousemove="OnMouseMove">
+    @if (SpotlightService.Enabled)
     {
-        <button class="btn m-1 @(tab.IsCompleted ? "btn-warning" : "btn-secondary")"
-                @onclick="() => SelectTab(tab.Id)">
-            @tab.Title
-        </button>
+        <SpotlightOverlay Radius="SpotlightService.Radius"
+                          X="x"
+                          Y="y" />
+    }Фвв
+    <button class="btn btn-primary"
+            @onclick="AddTab">
+        + Нова вкладка
+    </button>
+
+    <button class="btn btn-primary"
+            @onclick="RemoveTab">
+        - Видалити вкладку
+    </button>
+
+   
+
+    <div style="margin-top:10px">
+        @foreach (var tab in Tabs)
+        {
+            <button class="btn m-1 @(tab.IsCompleted ? "btn-warning" : "btn-secondary")"
+                    @onclick="() => SelectTab(tab.Id)">
+                @tab.Title
+            </button>
+        }
+    </div>
+
+    <hr />
+
+    @if (ActiveTabItem != null)
+    {
+        <DynamicComponent Type="typeof(TestPage)"
+                          Parameters="@GetParams(ActiveTabItem.Id)" />
     }
+    <button class="btn btn-dark"
+            @onclick="SpotlightService.Toggle">
+        @(SpotlightService.Enabled ? "Disable spotlight" : "Enable spotlight")
+    </button>
+    <hr />
+
+    <div>
+
+        <div style="width: 250px;">
+            <input type="range"
+                   min="50"
+                   max="300"
+                   step="10"
+                   value="@SpotlightService.Radius"
+                   @oninput="OnRadiusChanged"
+                   class="form-range" />
+        </div>
+
+    </div>
 </div>
 
-<hr />
-
-@if (ActiveTabItem != null)
-{
-    <DynamicComponent Type="typeof(TestPage)"
-                      Parameters="@GetParams(ActiveTabItem.Id)" />
-}
 @code {
+    double x = 200;
+    double y = 200;
+
+    private void OnMouseMove(MouseEventArgs e)
+    {
+        x = e.ClientX;
+        y = e.ClientY;
+    }
+
     async Task AddTab()
         => await TabItemService.AddTabAsync();
 
@@ -37,7 +81,28 @@
 
     void SelectTab(string id)
         => TabItemService.SelectTab(id);
+    protected override void OnInitialized()
+    {
+        SpotlightService.OnChange += HandleChange;
+    }
 
+    private void HandleChange()
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        SpotlightService.OnChange -= HandleChange;
+    }
+
+    private void OnRadiusChanged(ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out var value))
+        {
+            SpotlightService.SetRadius(value);
+        }
+    }
     List<TabItem> Tabs => TabItemService.Tabs;
 
     string? ActiveTab => TabItemService.ActiveTab;

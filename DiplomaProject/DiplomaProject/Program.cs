@@ -7,6 +7,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddScoped<TestGeneration>();
 builder.Services.AddScoped<TabItemService>();
+builder.Services.AddSingleton<SpotlightService>();
 builder.Services.AddSingleton<TestEvaluationService>();
 builder.Services.AddSingleton<JsonDataService>();
 builder.Services.AddSingleton<GeminiPdfService>();

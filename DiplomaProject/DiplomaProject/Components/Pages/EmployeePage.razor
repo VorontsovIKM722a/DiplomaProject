@@ -1,0 +1,62 @@
+﻿@page "/employees"
+@using DiplomaProject.Services
+@using DiplomaProject.Models
+
+@inject EmployeeService EmployeeService
+
+@rendermode InteractiveServer
+
+<h3>Employees</h3>
+
+<button class="btn btn-primary" @onclick="AddTest">
+    Add test employee
+</button>
+
+@if (employees == null)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <ul>
+        @foreach (var e in employees)
+        {
+            <li>
+                @e.Name - @e.Email - @e.Salary
+                <button @onclick="() => Delete(e.Id)">X</button>
+            </li>
+        }
+    </ul>
+}
+
+@code {
+    private List<Employee> employees = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Load();
+    }
+
+    private async Task Load()
+    {
+        employees = await EmployeeService.GetAllAsync();
+    }
+
+    private async Task AddTest()
+    {
+        await EmployeeService.AddAsync(new Employee
+        {
+            Name = "Test User",
+            Email = "test@mail.com",
+            Salary = 1000
+        });
+
+        await Load();
+    }
+
+    private async Task Delete(Guid id)
+    {
+        await EmployeeService.DeleteAsync(id);
+        await Load();
+    }
+}

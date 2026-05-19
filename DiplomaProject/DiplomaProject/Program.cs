@@ -2,6 +2,9 @@ using DiplomaProject.Client.Pages;
 using DiplomaProject.Components;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using DiplomaProject.Services;
+using DiplomaProject.Data;
+using Microsoft.EntityFrameworkCore;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -9,10 +12,18 @@ builder.Services.AddScoped<TestGeneration>();
 builder.Services.AddScoped<TabItemService>();
 builder.Services.AddSingleton<SpotlightService>();
 builder.Services.AddSingleton<TestEvaluationService>();
+
 builder.Services.AddSingleton<JsonDataService>();
 builder.Services.AddSingleton<GeminiPdfService>();
 builder.Services.AddSingleton<GeminiTestGeneration>();
 builder.Services.AddSingleton<GeminiTestGenerationMock>();
+
+builder.Services.AddScoped<EmployeeService>();
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    options.UseMySql(
+        builder.Configuration.GetConnectionString("DefaultConnection"),
+        ServerVersion.AutoDetect(builder.Configuration.GetConnectionString("DefaultConnection"))
+    ));
 
 // Add services to the container.
 builder.Services.AddRazorComponents()

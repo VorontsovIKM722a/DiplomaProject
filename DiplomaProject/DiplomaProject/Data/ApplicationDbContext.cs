@@ -1,14 +1,24 @@
-﻿using DiplomaProject.Models;
+﻿using DiplomaProject.Models.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace DiplomaProject.Data
 {
-    public class ApplicationDbContext : DbContext
+    public class AppDbContext : DbContext
     {
-        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)
+        public AppDbContext(DbContextOptions<AppDbContext> options)
+            : base(options)
         {
-            
         }
-        public DbSet<Employee> Employees { get; set; }
+
+        public DbSet<TabItemEntity> Tabs { get; set; }
+        public DbSet<TestStateEntity> TestStates { get; set; }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<TabItemEntity>()
+                .HasOne(t => t.TestState)
+                .WithOne(x => x.TabItem)
+                .HasForeignKey<TestStateEntity>(x => x.TabItemId);
+        }
     }
 }

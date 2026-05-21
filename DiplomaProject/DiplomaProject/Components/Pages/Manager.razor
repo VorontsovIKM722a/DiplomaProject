@@ -3,6 +3,8 @@
 @using DiplomaProject.Services
 @inject SpotlightService SpotlightService
 @inject TabItemService TabItemService
+@inject LoadTestService LoadTestService
+@inject DeleteTestService DeleteTestService
 
 @rendermode InteractiveServer
 <div class="manager-container"
@@ -66,7 +68,15 @@
 @code {
     double x = 200;
     double y = 200;
+    protected override async Task OnInitializedAsync()
+    {
+        SpotlightService.OnChange += HandleChange;
 
+        var tabsFromDb = await LoadTestService.LoadTabsAsync();
+
+        TabItemService.Tabs.Clear();
+        TabItemService.Tabs.AddRange(tabsFromDb);
+    }
     private void OnMouseMove(MouseEventArgs e)
     {
         x = e.ClientX;
@@ -77,14 +87,11 @@
         => await TabItemService.AddTabAsync();
 
     void RemoveTab()
-        => TabItemService.RemoveTab();
+        => TabItemService.RemoveTabAsync();
 
     void SelectTab(string id)
         => TabItemService.SelectTab(id);
-    protected override void OnInitialized()
-    {
-        SpotlightService.OnChange += HandleChange;
-    }
+    
 
     private void HandleChange()
     {

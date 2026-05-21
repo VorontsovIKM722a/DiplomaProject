@@ -1,10 +1,10 @@
 ﻿using DiplomaProject.Models;
 
-public class GeminiTestGenerationMock
+public class GeminiTestGenerationLocal
 {
     private readonly JsonDataService _jsonService;
 
-    public GeminiTestGenerationMock(JsonDataService jsonService)
+    public GeminiTestGenerationLocal(JsonDataService jsonService)
     {
         _jsonService = jsonService;
     }

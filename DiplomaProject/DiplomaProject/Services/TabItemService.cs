@@ -4,16 +4,20 @@ using DiplomaProject.Services;
 public class TabItemService
 {
     private readonly GeminiTestGeneration _testGeneration;
+    private readonly DeleteTestService _deleteTestService;
 
     public List<TabItem> Tabs { get; set; } = new();
     public string? ActiveTab { get; set; }
 
-    public TabItemService(GeminiTestGeneration testGeneration)
+    public TabItemService(
+        GeminiTestGeneration testGeneration,
+        DeleteTestService deleteTestService)
     {
         _testGeneration = testGeneration;
+        _deleteTestService = deleteTestService;
     }
 
-   
+
     public async Task AddTabAsync()
     {
         var tab = new TabItem
@@ -38,8 +42,8 @@ public class TabItemService
             Score = 0
         };
     }
-    
-    public void RemoveTab()
+
+    public async Task RemoveTabAsync()
     {
         if (ActiveTab == null)
             return;
@@ -47,7 +51,10 @@ public class TabItemService
         var tab = Tabs.FirstOrDefault(t => t.Id == ActiveTab);
 
         if (tab != null)
+        {
+            await _deleteTestService.DeleteByInstanceIdAsync(tab.Id);
             Tabs.Remove(tab);
+        }
 
         ActiveTab = Tabs.LastOrDefault()?.Id;
     }

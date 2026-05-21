@@ -16,10 +16,13 @@ builder.Services.AddSingleton<TestEvaluationService>();
 builder.Services.AddSingleton<JsonDataService>();
 builder.Services.AddSingleton<GeminiPdfService>();
 builder.Services.AddSingleton<GeminiTestGeneration>();
-builder.Services.AddSingleton<GeminiTestGenerationMock>();
+builder.Services.AddSingleton<GeminiTestGenerationLocal>();
 
-builder.Services.AddScoped<EmployeeService>();
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
+builder.Services.AddScoped<SaveTestService>();
+builder.Services.AddScoped<LoadTestService>();
+builder.Services.AddScoped<DeleteTestService>();
+
+builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseMySql(
         builder.Configuration.GetConnectionString("DefaultConnection"),
         ServerVersion.AutoDetect(builder.Configuration.GetConnectionString("DefaultConnection"))

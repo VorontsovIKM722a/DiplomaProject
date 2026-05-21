@@ -4,10 +4,11 @@
 
 @inject TestGeneration TestGeneration
 @inject TabItemService TabItemService
-@inject GeminiTestGenerationMock GeminiTestGeneration  //GeminiTestGenerationMock - підключає сервіс з локальними даними типу Json /   GeminiTestGeneration - сервіс з Gemini API //
+@inject GeminiTestGeneration GeminiTestGeneration  //GeminiTestGenerationLocal - підключає сервіс з локальними даними типу Json /   GeminiTestGeneration - сервіс з Gemini API //
 @inject GeminiPdfService GeminiPdfService
 @inject TestEvaluationService EvaluationService
 @inject JsonDataService JsonDataService
+@inject SaveTestService SaveTestService
 
 @rendermode InteractiveServer
 
@@ -183,6 +184,11 @@
                     <button class="btn btn-primary" @onclick="ButtonCheck">
                         Check answers
                     </button>
+            <button class="btn btn-success mt-2"
+                    @onclick="SaveTest"
+                    disabled="@(!state.IsGenerated)">
+                Save test
+            </button>
                 }
 
                 @if (state.ShowResult)
@@ -210,22 +216,64 @@
 
 
 @code {
-
-    
-    private bool loading;
+        private bool loading;
     private TestState state;
-    private bool IsLastQuestion =>
-    state != null &&
-    state.Tests != null &&
-    state.CurrentQuestion == state.Tests.Count - 1;
+    private bool IsLastQuestion =>  state != null &&
+                                    state.Tests != null &&
+                                    state.CurrentQuestion == state.Tests.Count - 1;
 
     [Parameter]
     public string InstanceId { get; set; }
 
     protected override void OnParametersSet()
     {
-        var tab = TabItemService.Tabs.FirstOrDefault(t => t.Id == InstanceId);
-        state = tab?.State;
+        var tab = TabItemService.Tabs
+            .FirstOrDefault(t => t.Id == InstanceId);
+
+        if (tab == null)
+        {
+            state = new TestState();
+            return;
+        }
+
+        state = tab.State ?? new TestState();
+
+        state.Tests ??= new();
+        state.SelectedRadio ??= new();
+        state.SelectedCheckbox ??= new();
+
+        // синхронізація Radio
+        while (state.SelectedRadio.Count < state.Tests.Count)
+        {
+            state.SelectedRadio.Add(-1);
+        }
+
+        if (state.SelectedRadio.Count > state.Tests.Count)
+        {
+            state.SelectedRadio =
+                state.SelectedRadio
+                    .Take(state.Tests.Count)
+                    .ToList();
+        }
+
+        // синхронізація Checkbox
+        while (state.SelectedCheckbox.Count < state.Tests.Count)
+        {
+            var answers =
+                state.Tests[state.SelectedCheckbox.Count]
+                .TaskAnswers?
+                .Count ?? 0;
+
+            state.SelectedCheckbox.Add(
+                Enumerable
+                    .Repeat(false, answers)
+                    .ToList());
+        }
+
+        if (state.CurrentQuestion >= state.Tests.Count)
+        {
+            state.CurrentQuestion = 0;
+        }
     }
 
     private bool CanGenerate =>
@@ -382,7 +430,10 @@
 
         UpdateTab(tab => tab.IsCompleted = true);
     }
-
+    private async Task SaveTest()
+    {
+        await SaveTestService.SaveAsync(state, InstanceId);
+    }
     private void ButtonNext()
     {
         if (state.CurrentQuestion < state.Tests.Count - 1)

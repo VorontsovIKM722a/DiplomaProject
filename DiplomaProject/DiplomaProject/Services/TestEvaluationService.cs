@@ -6,10 +6,21 @@ namespace DiplomaProject.Services
     {
         public bool IsAnswered(TestState state, int t)
         {
-            if (state.Tests[t].CorrectAnswerIndexList.Count == 1)
+            if (state?.Tests == null || t < 0 || t >= state.Tests.Count)
+                return false;
+
+            if (state.SelectedRadio == null || state.SelectedCheckbox == null)
+                return false;
+
+            if (state.SelectedRadio.Count <= t || state.SelectedCheckbox.Count <= t)
+                return false;
+
+            var test = state.Tests[t];
+
+            if ((test.CorrectAnswerIndexList?.Count ?? 0) == 1)
                 return state.SelectedRadio[t] != -1;
 
-            return state.SelectedCheckbox[t].Any(x => x);
+            return state.SelectedCheckbox[t]?.Any(x => x) == true;
         }
 
         public bool IsCorrect(TestState state, int t)

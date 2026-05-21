@@ -22,7 +22,7 @@ builder.Services.AddScoped<SaveTestService>();
 builder.Services.AddScoped<LoadTestService>();
 builder.Services.AddScoped<DeleteTestService>();
 
-builder.Services.AddDbContext<AppDbContext>(options =>
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseMySql(
         builder.Configuration.GetConnectionString("DefaultConnection"),
         ServerVersion.AutoDetect(builder.Configuration.GetConnectionString("DefaultConnection"))

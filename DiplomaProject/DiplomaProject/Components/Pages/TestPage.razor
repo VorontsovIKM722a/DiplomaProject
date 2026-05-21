@@ -4,7 +4,7 @@
 
 @inject TestGeneration TestGeneration
 @inject TabItemService TabItemService
-@inject GeminiTestGeneration GeminiTestGeneration  //GeminiTestGenerationLocal - підключає сервіс з локальними даними типу Json /   GeminiTestGeneration - сервіс з Gemini API //
+@inject GeminiTestGenerationLocal GeminiTestGeneration  //GeminiTestGenerationLocal - підключає сервіс з локальними даними типу Json /   GeminiTestGeneration - сервіс з Gemini API //
 @inject GeminiPdfService GeminiPdfService
 @inject TestEvaluationService EvaluationService
 @inject JsonDataService JsonDataService
@@ -12,7 +12,7 @@
 
 @rendermode InteractiveServer
 
-@if (!state.IsGenerated)
+@if (!state.IsGenerated && !state.IsLoadedFromDb)
 {
     <h3>Test Generator</h3>
 
@@ -224,7 +224,7 @@
 
     [Parameter]
     public string InstanceId { get; set; }
-
+    
     protected override void OnParametersSet()
     {
         var tab = TabItemService.Tabs
@@ -237,6 +237,8 @@
         }
 
         state = tab.State ?? new TestState();
+
+        state.IsLoadedFromDb = state.Tests != null && state.Tests.Any();
 
         state.Tests ??= new();
         state.SelectedRadio ??= new();
@@ -433,6 +435,8 @@
     private async Task SaveTest()
     {
         await SaveTestService.SaveAsync(state, InstanceId);
+
+        state.IsLoadedFromDb = true;
     }
     private void ButtonNext()
     {

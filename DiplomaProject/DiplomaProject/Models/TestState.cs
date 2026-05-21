@@ -17,11 +17,10 @@ public class TestState
 
     public bool ShowResult { get; set; }
     public int Score { get; set; }
-
+    public bool IsLoadedFromDb { get; set; }
     public bool IsGenerated { get; set; }
     public string RawResponse { get; set; }
 
-    public bool UseJsonInput { get; set; }
     public string UserJson { get; set; } = "";
 
     public GenerationMode Mode { get; set; } = GenerationMode.Topic;

@@ -8,9 +8,9 @@ namespace DiplomaProject.Services
 {
     public class SaveTestService
     {
-        private readonly AppDbContext _db;
+        private readonly ApplicationDbContext _db;
 
-        public SaveTestService(AppDbContext db)
+        public SaveTestService(ApplicationDbContext db)
         {
             _db = db;
         }

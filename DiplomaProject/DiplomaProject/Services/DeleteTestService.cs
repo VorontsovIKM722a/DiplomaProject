@@ -5,9 +5,9 @@ namespace DiplomaProject.Services
 {
     public class DeleteTestService
     {
-        private readonly AppDbContext _db;
+        private readonly ApplicationDbContext _db;
 
-        public DeleteTestService(AppDbContext db)
+        public DeleteTestService(ApplicationDbContext db)
         {
             _db = db;
         }

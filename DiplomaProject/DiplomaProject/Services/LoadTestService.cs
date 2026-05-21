@@ -8,9 +8,9 @@ namespace DiplomaProject.Services
 {
     public class LoadTestService
     {
-        private readonly AppDbContext _db;
+        private readonly ApplicationDbContext _db;
 
-        public LoadTestService(AppDbContext db)
+        public LoadTestService(ApplicationDbContext db)
         {
             _db = db;
         }

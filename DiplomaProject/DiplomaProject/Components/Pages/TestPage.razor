@@ -184,11 +184,7 @@
                     <button class="btn btn-primary" @onclick="ButtonCheck">
                         Check answers
                     </button>
-            <button class="btn btn-success mt-2"
-                    @onclick="SaveTest"
-                    disabled="@(!state.ShowResult)">
-                Save test
-            </button>
+        
                 }
 
                 @if (state.ShowResult)
@@ -221,7 +217,8 @@
     private bool IsLastQuestion =>  state != null &&
                                     state.Tests != null &&
                                     state.CurrentQuestion == state.Tests.Count - 1;
-
+    [Parameter]
+    public EventCallback<TestState> OnSaveRequested { get; set; }
     [Parameter]
     public string InstanceId { get; set; }
     
@@ -432,14 +429,7 @@
 
         UpdateTab(tab => tab.IsCompleted = true);
     }
-    private async Task SaveTest()
-    {
-        if (state == null)
-            return;
-        await SaveTestService.SaveAsync(state, InstanceId);
-        var score = EvaluationService.CalculateScore(state);
-        await SaveTestService.SaveResultAsync(state, InstanceId, score);
-    }
+    
     private void ButtonNext()
     {
         if (state.CurrentQuestion < state.Tests.Count - 1)

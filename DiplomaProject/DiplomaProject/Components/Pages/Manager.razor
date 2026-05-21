@@ -6,6 +6,8 @@
 @inject TabItemService TabItemService
 @inject LoadTestService LoadTestService
 @inject DeleteTestService DeleteTestService
+@inject SaveTestService SaveTestService
+@inject TestEvaluationService TestEvaluationService
 
 @rendermode InteractiveServer
 
@@ -24,19 +26,25 @@
         + Нова вкладка
     </button>
 
-    <!-- 🔥 ВКЛАДКИ СПИСКОМ -->
-    <div class="d-flex flex-column gap-2">
+    <div class="d-flex flex-column gap-2" style="max-width: 320px;">
 
         @foreach (var tab in Tabs)
         {
             <div class="d-flex align-items-center gap-2">
 
-                <button class="btn flex-grow-1 @(tab.IsCompleted ? "btn-warning" : "btn-secondary")"
+                <button class="btn @(tab.IsCompleted ? "btn-warning" : "btn-secondary")"
+                        style="flex: 1;
+                    text-align: left;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    white-space: nowrap;"
+                        title="@tab.Title"
                         @onclick="() => SelectTab(tab.Id)">
                     @tab.Title
                 </button>
 
                 <button class="btn btn-danger btn-sm"
+                        style="flex-shrink: 0;"
                         @onclick="() => RemoveTab(tab.Id)">
                     ✕
                 </button>
@@ -54,12 +62,18 @@
                           Parameters="@GetParams(ActiveTabItem.Id)" />
     }
 
-    <button class="btn btn-dark mt-3"
-            @onclick="SpotlightService.Toggle">
-        @(SpotlightService.Enabled ? "Disable spotlight" : "Enable spotlight")
+    <button class="btn btn-success mt-2"
+            @onclick="SaveActiveTab"
+            disabled="@(!CanSaveActiveTab)">
+        Save test
     </button>
 
     <hr />
+
+    <button class="btn btn-dark"
+            @onclick="SpotlightService.Toggle">
+        @(SpotlightService.Enabled ? "Disable spotlight" : "Enable spotlight")
+    </button>
 
     <div style="width: 250px;">
         <input type="range"
@@ -87,6 +101,24 @@
         TabItemService.Tabs.AddRange(tabsFromDb);
     }
 
+    private bool CanSaveActiveTab =>
+        ActiveTabItem?.State != null &&
+        ActiveTabItem.State.Tests?.Count > 0 &&
+        ActiveTabItem.State.ShowResult == true;
+
+    private async Task SaveActiveTab()
+    {
+        var tab = ActiveTabItem;
+
+        if (tab?.State == null)
+            return;
+
+        var score = TestEvaluationService.CalculateScore(tab.State);
+
+        await SaveTestService.SaveAsync(tab.State, tab.Id);
+        await SaveTestService.SaveResultAsync(tab.State, tab.Id, score);
+    }
+
     private void OnMouseMove(MouseEventArgs e)
     {
         x = e.ClientX;
@@ -102,9 +134,9 @@
     {
         await DeleteTestService.DeleteByInstanceIdAsync(id);
 
-        TabItemService.Tabs.RemoveAll(t => t.Id == id);
-
-        StateHasChanged();
+        var tab = TabItemService.Tabs.FirstOrDefault(t => t.Id == id);
+        if (tab != null)
+            TabItemService.Tabs.Remove(tab);
     }
 
     private void SelectTab(string id)

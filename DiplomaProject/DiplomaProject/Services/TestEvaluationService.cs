@@ -6,8 +6,8 @@ namespace DiplomaProject.Services
     {
         public bool IsAnswered(TestState state, int t)
         {
-            if (state?.Tests == null || t < 0 || t >= state.Tests.Count)
-                return false;
+            if (state?.Tests == null) return false;
+            if (t < 0 || t >= state.Tests.Count) return false;
 
             if (state.SelectedRadio == null || state.SelectedCheckbox == null)
                 return false;
@@ -25,14 +25,24 @@ namespace DiplomaProject.Services
 
         public bool IsCorrect(TestState state, int t)
         {
-            if (state.Tests[t].CorrectAnswerIndexList.Count == 1)
-                return state.SelectedRadio[t] == state.Tests[t].CorrectAnswerIndexList[0];
+            if (state?.Tests == null) return false;
+            if (t < 0 || t >= state.Tests.Count) return false;
 
-            for (int i = 0; i < state.Tests[t].TaskAnswers.Count; i++)
+            var test = state.Tests[t];
+
+            if ((test.CorrectAnswerIndexList?.Count ?? 0) == 0)
+                return false;
+
+            if (test.CorrectAnswerIndexList.Count == 1)
             {
-                bool mustBeChecked = state.Tests[t].CorrectAnswerIndexList.Contains(i);
+                return state.SelectedRadio[t] == test.CorrectAnswerIndexList[0];
+            }
 
-                if (state.SelectedCheckbox[t][i] != mustBeChecked)
+            for (int i = 0; i < test.TaskAnswers.Count; i++)
+            {
+                bool mustBe = test.CorrectAnswerIndexList.Contains(i);
+
+                if (state.SelectedCheckbox[t][i] != mustBe)
                     return false;
             }
 
@@ -41,6 +51,9 @@ namespace DiplomaProject.Services
 
         public int CalculateScore(TestState state)
         {
+            if (state?.Tests == null)
+                return 0;
+
             int score = 0;
 
             for (int t = 0; t < state.Tests.Count; t++)
@@ -71,13 +84,13 @@ namespace DiplomaProject.Services
             if (!state.ShowResult)
                 return "";
 
-            if (state.Tests[tIndex].CorrectAnswerIndexList.Contains(iIndex))
+            var test = state.Tests[tIndex];
+
+            if (test.CorrectAnswerIndexList.Contains(iIndex))
                 return "color: green;";
 
-            if (state.Tests[tIndex].CorrectAnswerIndexList.Count == 1)
-            {
+            if (test.CorrectAnswerIndexList.Count == 1)
                 return state.SelectedRadio[tIndex] == iIndex ? "color: red;" : "";
-            }
 
             return state.SelectedCheckbox[tIndex][iIndex] ? "color: red;" : "";
         }

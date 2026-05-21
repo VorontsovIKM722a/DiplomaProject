@@ -1,40 +1,49 @@
 ﻿@page "/manager"
 @using DiplomaProject.Models
 @using DiplomaProject.Services
+
 @inject SpotlightService SpotlightService
 @inject TabItemService TabItemService
 @inject LoadTestService LoadTestService
 @inject DeleteTestService DeleteTestService
 
 @rendermode InteractiveServer
+
 <div class="manager-container"
      @onmousemove="OnMouseMove">
+
     @if (SpotlightService.Enabled)
     {
         <SpotlightOverlay Radius="SpotlightService.Radius"
                           X="x"
                           Y="y" />
     }
-    <button class="btn btn-primary"
+
+    <button class="btn btn-primary mb-3"
             @onclick="AddTab">
         + Нова вкладка
     </button>
 
-    <button class="btn btn-primary"
-            @onclick="RemoveTab">
-        - Видалити вкладку
-    </button>
+    <!-- 🔥 ВКЛАДКИ СПИСКОМ -->
+    <div class="d-flex flex-column gap-2">
 
-   
-
-    <div style="margin-top:10px">
         @foreach (var tab in Tabs)
         {
-            <button class="btn m-1 @(tab.IsCompleted ? "btn-warning" : "btn-secondary")"
-                    @onclick="() => SelectTab(tab.Id)">
-                @tab.Title
-            </button>
+            <div class="d-flex align-items-center gap-2">
+
+                <button class="btn flex-grow-1 @(tab.IsCompleted ? "btn-warning" : "btn-secondary")"
+                        @onclick="() => SelectTab(tab.Id)">
+                    @tab.Title
+                </button>
+
+                <button class="btn btn-danger btn-sm"
+                        @onclick="() => RemoveTab(tab.Id)">
+                    ✕
+                </button>
+
+            </div>
         }
+
     </div>
 
     <hr />
@@ -44,30 +53,30 @@
         <DynamicComponent Type="typeof(TestPage)"
                           Parameters="@GetParams(ActiveTabItem.Id)" />
     }
-    <button class="btn btn-dark"
+
+    <button class="btn btn-dark mt-3"
             @onclick="SpotlightService.Toggle">
         @(SpotlightService.Enabled ? "Disable spotlight" : "Enable spotlight")
     </button>
+
     <hr />
 
-    <div>
-
-        <div style="width: 250px;">
-            <input type="range"
-                   min="50"
-                   max="300"
-                   step="10"
-                   value="@SpotlightService.Radius"
-                   @oninput="OnRadiusChanged"
-                   class="form-range" />
-        </div>
-
+    <div style="width: 250px;">
+        <input type="range"
+               min="50"
+               max="300"
+               step="10"
+               value="@SpotlightService.Radius"
+               @oninput="OnRadiusChanged"
+               class="form-range" />
     </div>
+
 </div>
 
 @code {
     double x = 200;
     double y = 200;
+
     protected override async Task OnInitializedAsync()
     {
         SpotlightService.OnChange += HandleChange;
@@ -77,21 +86,31 @@
         TabItemService.Tabs.Clear();
         TabItemService.Tabs.AddRange(tabsFromDb);
     }
+
     private void OnMouseMove(MouseEventArgs e)
     {
         x = e.ClientX;
         y = e.ClientY;
     }
 
-    async Task AddTab()
-        => await TabItemService.AddTabAsync();
+    private async Task AddTab()
+    {
+        await TabItemService.AddTabAsync();
+    }
 
-    void RemoveTab()
-        => TabItemService.RemoveTabAsync();
+    private async Task RemoveTab(string id)
+    {
+        await DeleteTestService.DeleteByInstanceIdAsync(id);
 
-    void SelectTab(string id)
-        => TabItemService.SelectTab(id);
-    
+        TabItemService.Tabs.RemoveAll(t => t.Id == id);
+
+        StateHasChanged();
+    }
+
+    private void SelectTab(string id)
+    {
+        TabItemService.SelectTab(id);
+    }
 
     private void HandleChange()
     {
@@ -110,6 +129,7 @@
             SpotlightService.SetRadius(value);
         }
     }
+
     List<TabItem> Tabs => TabItemService.Tabs;
 
     string? ActiveTab => TabItemService.ActiveTab;

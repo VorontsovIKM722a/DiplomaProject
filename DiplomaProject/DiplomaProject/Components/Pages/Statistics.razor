@@ -1,5 +1,110 @@
-﻿<h3>Statistics</h3>
+﻿@page "/statistics"
+@using Microsoft.EntityFrameworkCore
+@using DiplomaProject.Data
+@using DiplomaProject.Models.Entities
+
+@inject ApplicationDbContext Db
+
+<h3>Statistics</h3>
+
+@if (tabs == null)
+{
+    <p>Завантаження...</p>
+}
+else if (!tabs.Any())
+{
+    <p>Немає результатів</p>
+}
+else
+{
+    @foreach (var tab in tabs)
+    {
+        var attempts = tab.TestState?.Attempts?
+            .OrderByDescending(x => x.CreatedAt)
+            .ToList();
+
+        if (attempts == null || !attempts.Any())
+            continue;
+
+        var avg = attempts.Average(x => x.Score);
+
+        var maxScore =
+            tab.TestState?.Count > 0
+                ? tab.TestState.Count
+                : attempts.Max(x => x.Answers?.Count ?? 0);
+
+        <details class="mb-3">
+
+            <summary style="
+                cursor:pointer;
+                padding:10px;
+                background:#eee;
+                border-radius:8px;">
+
+                <div>
+                    <b>@tab.Title</b>
+                </div>
+
+                <div>
+                    Спроб: @attempts.Count
+                </div>
+
+                <div>
+                    Середній бал:
+                    @avg.ToString("0.00") / @maxScore
+                </div>
+
+            </summary>
+
+            <div class="mt-2">
+
+                @foreach (var attempt in attempts)
+                {
+                    <div class="card p-3 mb-2">
+
+                        <div>
+                            <b>Score:</b>
+                            @attempt.Score / @maxScore
+                        </div>
+
+                        <div>
+                            <b>Date:</b>
+                            @attempt.CreatedAt
+                            .ToLocalTime()
+                            .ToString("dd.MM.yyyy HH:mm:ss")
+                        </div>
+
+                        <hr />
+
+                        @foreach (var ans in attempt.Answers)
+                        {
+                            <div>
+                                Q@(ans.QuestionIndex + 1)
+                                —
+                                @(ans.IsCorrect ? "✔" : "✖")
+                            </div>
+                        }
+
+                    </div>
+                }
+
+            </div>
+
+        </details>
+    }
+}
 
 @code {
 
+    private List<TabItemEntity> tabs = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        tabs = await Db.Tabs
+            .Include(t => t.TestState)
+                .ThenInclude(s => s.Attempts)
+                    .ThenInclude(a => a.Answers)
+            .OrderBy(t => t.Title)
+            .ToListAsync();
+    }
 }

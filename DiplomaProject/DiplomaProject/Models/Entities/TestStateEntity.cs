@@ -15,7 +15,7 @@
         public string RawResponse { get; set; }
         public string UserJson { get; set; }
         public string PdfPath { get; set; }
-
+        public List<TestAttemptEntity> Attempts { get; set; } = new();
         public string TestsJson { get; set; }
     }
 }

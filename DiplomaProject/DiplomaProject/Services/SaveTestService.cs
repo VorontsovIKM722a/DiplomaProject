@@ -15,44 +15,97 @@ namespace DiplomaProject.Services
             _db = db;
         }
 
+        // -------------------------
+        // 1. SAVE СТРУКТУРИ ТЕСТУ
+        // -------------------------
         public async Task SaveAsync(TestState state, string instanceId)
         {
-            if (state == null || state.Tests == null)
+            if (state == null)
                 return;
 
-            var entity = await _db.Tabs
+            var tab = await _db.Tabs
                 .Include(x => x.TestState)
                 .FirstOrDefaultAsync(x => x.InstanceId == instanceId);
 
-            if (entity == null)
+            if (tab == null)
             {
-                entity = new TabItemEntity
+                tab = new TabItemEntity
                 {
                     InstanceId = instanceId,
-                    Title = state.Topic,
-                    IsCompleted = false
+                    Title = state.Topic ?? "Test",
+                    IsCompleted = false,
+                    TestState = new TestStateEntity()
                 };
 
-                _db.Tabs.Add(entity);
+                _db.Tabs.Add(tab);
             }
 
-            entity.Title = state.Topic;
+            tab.TestState ??= new TestStateEntity();
 
-            if (entity.TestState == null)
+            tab.Title = state.Topic ?? tab.Title;
+
+            tab.TestState.Mode = state.Mode.ToString();
+            tab.TestState.Topic = state.Topic;
+            tab.TestState.Instructions = state.Instructions;
+            tab.TestState.Count = state.Count;
+            tab.TestState.RawResponse = state.RawResponse;
+            tab.TestState.UserJson = state.UserJson;
+            tab.TestState.PdfPath = state.PdfPath ?? "";
+
+            tab.TestState.TestsJson = JsonSerializer.Serialize(state.Tests);
+
+            await _db.SaveChangesAsync();
+        }
+
+        // -------------------------
+        // 2. SAVE РЕЗУЛЬТАТІВ (СПРОБА)
+        // -------------------------
+        public async Task SaveResultAsync(TestState state, string instanceId, int score)
+        {
+            if (state == null)
+                return;
+
+            var tab = await _db.Tabs
+                .Include(x => x.TestState)
+                    .ThenInclude(x => x.Attempts)
+                        .ThenInclude(a => a.Answers)
+                .FirstOrDefaultAsync(x => x.InstanceId == instanceId);
+
+            if (tab?.TestState == null)
+                return;
+
+            var testState = tab.TestState;
+
+            testState.Attempts ??= new List<TestAttemptEntity>();
+
+            var attempt = new TestAttemptEntity
             {
-                entity.TestState = new TestStateEntity();
+                Score = score,
+                CreatedAt = DateTime.UtcNow,
+                Answers = new List<TestAnswerEntity>()
+            };
+
+            for (int i = 0; i < state.Tests.Count; i++)
+            {
+                var correct = state.Tests[i].CorrectAnswerIndexList ?? new List<int>();
+
+                var userAnswer = state.SelectedRadio.Count > i
+                    ? state.SelectedRadio[i]
+                    : -1;
+
+                bool isCorrect =
+                    correct.Count == 1 &&
+                    correct[0] == userAnswer;
+
+                attempt.Answers.Add(new TestAnswerEntity
+                {
+                    QuestionIndex = i,
+                    SelectedAnswerIndex = userAnswer,
+                    IsCorrect = isCorrect
+                });
             }
 
-            entity.TestState.Mode = state.Mode.ToString();
-            entity.TestState.Topic = state.Topic;
-            entity.TestState.Instructions = state.Instructions;
-            entity.TestState.Count = state.Count;
-            entity.TestState.RawResponse = state.RawResponse;
-            entity.TestState.UserJson = state.UserJson;
-            entity.TestState.PdfPath = state.PdfPath ?? "";
-
-            entity.TestState.TestsJson =
-                JsonSerializer.Serialize(state.Tests);
+            testState.Attempts.Add(attempt);
 
             await _db.SaveChangesAsync();
         }

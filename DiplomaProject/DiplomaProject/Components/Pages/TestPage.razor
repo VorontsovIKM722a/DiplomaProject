@@ -186,7 +186,7 @@
                     </button>
             <button class="btn btn-success mt-2"
                     @onclick="SaveTest"
-                    disabled="@(!state.IsGenerated)">
+                    disabled="@(!state.ShowResult)">
                 Save test
             </button>
                 }
@@ -434,9 +434,11 @@
     }
     private async Task SaveTest()
     {
+        if (state == null)
+            return;
         await SaveTestService.SaveAsync(state, InstanceId);
-
-        state.IsLoadedFromDb = true;
+        var score = EvaluationService.CalculateScore(state);
+        await SaveTestService.SaveResultAsync(state, InstanceId, score);
     }
     private void ButtonNext()
     {

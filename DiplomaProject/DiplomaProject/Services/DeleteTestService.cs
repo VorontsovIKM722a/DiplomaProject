@@ -16,6 +16,8 @@ namespace DiplomaProject.Services
         {
             var tab = await _db.Tabs
                 .Include(t => t.TestState)
+                    .ThenInclude(ts => ts.Attempts)
+                        .ThenInclude(a => a.Answers)
                 .FirstOrDefaultAsync(t => t.InstanceId == instanceId);
 
             if (tab == null)
@@ -23,9 +25,28 @@ namespace DiplomaProject.Services
 
             if (tab.TestState != null)
             {
+                // 1. Видаляємо відповіді всіх спроб
+                foreach (var attempt in tab.TestState.Attempts)
+                {
+                    if (attempt.Answers.Any())
+                    {
+                        _db.Set<TestAnswerEntity>()
+                            .RemoveRange(attempt.Answers);
+                    }
+                }
+
+                // 2. Видаляємо всі спроби
+                if (tab.TestState.Attempts.Any())
+                {
+                    _db.Set<TestAttemptEntity>()
+                        .RemoveRange(tab.TestState.Attempts);
+                }
+
+                // 3. Видаляємо сам тест
                 _db.TestStates.Remove(tab.TestState);
             }
 
+            // 4. Видаляємо вкладку
             _db.Tabs.Remove(tab);
 
             await _db.SaveChangesAsync();

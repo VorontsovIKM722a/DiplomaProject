@@ -70,13 +70,13 @@ else
                         <div>
                             <b>Date:</b>
                             @attempt.CreatedAt
-                            .ToLocalTime()
-                            .ToString("dd.MM.yyyy HH:mm:ss")
+                           
                         </div>
 
                         <hr />
 
-                        @foreach (var ans in attempt.Answers)
+                        @foreach (var ans in attempt.Answers
+                        .OrderBy(a => a.QuestionIndex))
                         {
                             <div>
                                 Q@(ans.QuestionIndex + 1)

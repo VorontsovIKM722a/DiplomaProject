@@ -1,0 +1,226 @@
+﻿@page "/manager-anticheat"
+@using DiplomaProject.Models
+@using DiplomaProject.Services
+@inject IJSRuntime JS
+
+@inject SpotlightService SpotlightService
+@inject TabItemService TabItemService
+@inject LoadTestService LoadTestService
+@inject DeleteTestService DeleteTestService
+@inject SaveTestService SaveTestService
+@inject TestEvaluationService TestEvaluationService
+
+@rendermode InteractiveServer
+
+<div class="manager-container d-flex gap-4 p-3 no-copy"
+     tabindex="0"
+     @onmousemove="OnMouseMove"
+     @onkeydown="BlockKeys"
+     @oncontextmenu:preventDefault="true">
+
+    @if (SpotlightService.Enabled)
+    {
+        <SpotlightOverlay Radius="SpotlightService.Radius"
+                          X="x"
+                          Y="y" />
+    }
+
+    <!-- LEFT PANEL -->
+    <div class="border rounded-3 shadow-sm p-3 bg-light"
+         style="width: 340px;">
+
+        <button class="btn btn-primary w-100 mb-3"
+                @onclick="AddTab">
+            + Нова вкладка
+        </button>
+
+        <div class="d-flex flex-column gap-2">
+
+            @foreach (var tab in Tabs)
+            {
+                var isActive = ActiveTab == tab.Id;
+
+                <div class="d-flex align-items-center justify-content-between p-2 rounded border
+                    @(isActive ? "bg-primary-subtle border-primary" : "bg-white")">
+
+                    <div style="width:4px;height:28px;border-radius:4px;
+                        background:@(isActive ? "#0d6efd" : "transparent");
+                        margin-right:8px;">
+                    </div>
+
+                    <button class="btn btn-sm flex-grow-1 text-start border-0 bg-transparent text-truncate"
+                            @onclick="() => SelectTab(tab.Id)">
+                        @tab.Title
+
+                        @if (tab.IsCompleted)
+                        {
+                            <span class="ms-2 text-success">●</span>
+                        }
+                    </button>
+
+                    <button class="btn btn-sm btn-outline-danger ms-2"
+                            @onclick="() => RemoveTab(tab.Id)">
+                        ✕
+                    </button>
+
+                </div>
+            }
+
+        </div>
+    </div>
+
+    <!-- MAIN -->
+    <div class="flex-grow-1">
+
+        <div class="card shadow-sm border-0 mb-3">
+            <div class="card-header bg-white">
+                <strong>Активна вкладка</strong>
+            </div>
+
+            <div class="card-body">
+                @if (ActiveTabItem != null)
+                {
+                    <DynamicComponent Type="typeof(TestPage)"
+                                      Parameters="@GetParams(ActiveTabItem.Id)" />
+                }
+                else
+                {
+                    <div class="text-muted">Вкладку не вибрано</div>
+                }
+            </div>
+        </div>
+
+        <button class="btn btn-success"
+                @onclick="SaveActiveTab"
+                disabled="@(!CanSaveActiveTab)">
+            Save test
+        </button>
+
+        <hr />
+
+        <button class="btn btn-dark"
+                @onclick="SpotlightService.Toggle">
+            @(SpotlightService.Enabled ? "Disable spotlight" : "Enable spotlight")
+        </button>
+
+        <div style="width:250px" class="mt-2">
+            <input type="range"
+                   min="50"
+                   max="300"
+                   step="10"
+                   value="@SpotlightService.Radius"
+                   @oninput="OnRadiusChanged"
+                   class="form-range" />
+        </div>
+
+    </div>
+</div>
+
+<style>
+    .no-copy {
+        user-select: none;
+        -webkit-user-select: none;
+        -ms-user-select: none;
+    }
+</style>
+
+@code {
+    double x = 200;
+    double y = 200;
+
+    protected override async Task OnInitializedAsync()
+    {
+        SpotlightService.OnChange += HandleChange;
+
+        var tabsFromDb = await LoadTestService.LoadTabsAsync();
+
+        TabItemService.Tabs.Clear();
+        TabItemService.Tabs.AddRange(tabsFromDb);
+    }
+
+    private bool CanSaveActiveTab =>
+        ActiveTabItem?.State != null &&
+        ActiveTabItem.State.Tests?.Count > 0 &&
+        ActiveTabItem.State.ShowResult == true;
+
+    private async Task SaveActiveTab()
+    {
+        var tab = ActiveTabItem;
+
+        if (tab?.State == null)
+            return;
+
+        var score = TestEvaluationService.CalculateScore(tab.State);
+
+        await SaveTestService.SaveAsync(tab.State, tab.Id);
+        await SaveTestService.SaveResultAsync(tab.State, tab.Id, score);
+    }
+
+    private void OnMouseMove(MouseEventArgs e)
+    {
+        x = e.ClientX;
+        y = e.ClientY;
+    }
+
+    private async Task AddTab()
+    {
+        await TabItemService.AddTabAsync();
+    }
+
+    private async Task RemoveTab(string id)
+    {
+        await DeleteTestService.DeleteByInstanceIdAsync(id);
+
+        var tab = TabItemService.Tabs.FirstOrDefault(t => t.Id == id);
+        if (tab != null)
+            TabItemService.Tabs.Remove(tab);
+    }
+
+    private void SelectTab(string id)
+    {
+        TabItemService.SelectTab(id);
+    }
+
+    private void HandleChange()
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        SpotlightService.OnChange -= HandleChange;
+    }
+
+    private void OnRadiusChanged(ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out var value))
+        {
+            SpotlightService.SetRadius(value);
+        }
+    }
+    private void BlockKeys(KeyboardEventArgs e)
+    {
+        if (e.CtrlKey)
+        {
+            var key = e.Key.ToLower();
+
+            if (key is "c" or "s" or "p")
+            {
+                return; // НЕПРАВИЛЬНО блокувати тут — C# не має preventDefault
+            }
+        }
+    }
+
+    List<TabItem> Tabs => TabItemService.Tabs;
+
+    string? ActiveTab => TabItemService.ActiveTab;
+
+    TabItem? ActiveTabItem =>
+        Tabs.FirstOrDefault(t => t.Id == ActiveTab);
+
+    Dictionary<string, object> GetParams(string id) =>
+        new()
+        {
+            { "InstanceId", id }
+        };
+}

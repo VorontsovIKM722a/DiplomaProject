@@ -14,205 +14,211 @@
 
 @if (!state.IsGenerated && !state.IsLoadedFromDb)
 {
-    <h3>Test Generator</h3>
+    <div class="container mt-4">
 
-   //перемикання між режимами генерації
-    <div class="btn-group mb-3">
-        <button class="btn btn-outline-primary"
-                @onclick="() => SetMode(GenerationMode.Topic)">
-            Topic
-        </button>
+        <h3 class="mb-3">Test Generator</h3>
 
-        <button class="btn btn-outline-primary"
-                @onclick="() => SetMode(GenerationMode.Json)">
-            JSON
-        </button>
+        <!-- MODE SWITCH -->
+        <div class="btn-group mb-3">
+            <button class="btn btn-outline-primary"
+                    @onclick="() => SetMode(GenerationMode.Topic)">
+                Topic
+            </button>
 
-        <button class="btn btn-outline-primary"
-                @onclick="() => SetMode(GenerationMode.Pdf)">
-            PDF
-        </button>
-    </div>
+            <button class="btn btn-outline-primary"
+                    @onclick="() => SetMode(GenerationMode.Json)">
+                JSON
+            </button>
 
-    //режим за темою
-    @if (state.Mode == GenerationMode.Topic)
-    {
-        <input class="form-control mb-2"
-               @bind="state.Topic"
-               @oninput="OnInputChanged"
-               placeholder="Введіть тему тесту" />
+            <button class="btn btn-outline-primary"
+                    @onclick="() => SetMode(GenerationMode.Pdf)">
+                PDF
+            </button>
+        </div>
 
-        <textarea class="form-control mb-2"
-                  style="height:120px"
-                  @bind="state.Instructions"
-                  @oninput="OnInputChanged"
-                      placeholder="Інструкції для генерації тестів">
-        </textarea>
+        <!-- INPUT CARD -->
+        <div class="card shadow-sm p-3 border-0">
 
-            <label class="form-label">Кількість завдань</label>
+            @if (state.Mode == GenerationMode.Topic)
+            {
+                <input class="form-control mb-2"
+                       @bind="state.Topic"
+                       @oninput="OnInputChanged"
+                       placeholder="Введіть тему тесту" />
 
-            <InputNumber @bind-Value="state.Count"
-                         @oninput="OnInputChanged"
-                         min="1" max="20"
-                         class="form-control mb-2"
-                         style="width:120px" />
-        }
-
-        //режим Json
-        @if (state.Mode == GenerationMode.Json)
-        {
-            <input class="form-control mb-2"
-                   @bind="state.Topic"
-                   @oninput="OnInputChanged"
-                   placeholder="Назва тесту" />
-
-            <InputTextArea class="form-control mb-2"
-                           style="height:250px"
-                           @bind-Value="state.UserJson"
-                           @oninput="OnInputChanged" />
-        }
-
-        //режим PDF
-        @if (state.Mode == GenerationMode.Pdf)
-        {
-            <input class="form-control mb-2"
-                   @bind="state.Topic"
-                   @oninput="OnInputChanged"
-                   placeholder="Назва тесту" />
-
-            <textarea class="form-control mb-2"
-                      style="height:120px"
-                      @bind="state.Instructions"
-                      @oninput="OnInputChanged"
-                          placeholder="Інструкції для аналізу PDF">
-        </textarea>
+                <textarea class="form-control mb-2"
+                          style="height:110px"
+                          @bind="state.Instructions"
+                          @oninput="OnInputChanged"
+                          placeholder="Інструкції"></textarea>
 
                 <label class="form-label">Кількість завдань</label>
 
-                <InputNumber @bind-Value="state.Count"
-                             @oninput="OnInputChanged"
+                <InputNumber class="form-control mb-2"
+                             style="width:120px"
+                             @bind-Value="state.Count"
                              min="1" max="20"
-                             class="form-control mb-2"
-                             style="width:120px" />
+                             @oninput="OnInputChanged" />
+            }
+
+            @if (state.Mode == GenerationMode.Json)
+            {
+                <input class="form-control mb-2"
+                       @bind="state.Topic"
+                       @oninput="OnInputChanged"
+                       placeholder="Назва тесту" />
+
+                <InputTextArea class="form-control mb-2"
+                               style="height:200px"
+                               @bind-Value="state.UserJson"
+                               @oninput="OnInputChanged" />
+            }
+
+            @if (state.Mode == GenerationMode.Pdf)
+            {
+                <input class="form-control mb-2"
+                       @bind="state.Topic"
+                       @oninput="OnInputChanged"
+                       placeholder="Назва тесту" />
+
+                <textarea class="form-control mb-2"
+                          style="height:110px"
+                          @bind="state.Instructions"
+                          @oninput="OnInputChanged"
+                          placeholder="Інструкції PDF"></textarea>
+
+                <label class="form-label">Кількість завдань</label>
+
+                <InputNumber class="form-control mb-2"
+                             style="width:120px"
+                             @bind-Value="state.Count"
+                             min="1" max="20"
+                             @oninput="OnInputChanged" />
 
                 <InputFile OnChange="OnPdfSelected" class="mb-2" />
 
                 @if (!string.IsNullOrEmpty(state.PdfPath))
                 {
-                    <div class="alert alert-success">
+                    <div class="alert alert-success py-1">
                         PDF завантажено
                     </div>
                 }
             }
 
-            <button class="btn btn-primary"
+            <!-- BUTTON -->
+            <button class="btn btn-primary w-100 mt-2"
                     @onclick="Generate"
                     disabled="@(!CanGenerate)">
                 Generate tests
             </button>
 
+            <!-- PROGRESS -->
             @if (loading)
             {
-                <div class="alert alert-info mt-2">
-                    Генерація...
+                <div class="mt-3">
+
+                    <div class="progress" style="height:22px;">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated"
+                             style="width:@($"{progress}%")">
+                            @progress%
+                        </div>
+                    </div>
+
+                    <small class="text-muted d-block mt-1">
+                        Генерація тестів...
+                    </small>
+
                 </div>
             }
 
-            <hr />
-        }
+        </div>
 
+        <hr />
+
+    </div>
+}
         
-  
-        @if (state.Tests?.Any() == true)
+@if (state.Tests?.Any() == true)
+{
+    <div class="d-flex gap-2 flex-wrap">
+        @for (int i = 0; i < state.Tests.Count; i++)
         {
-            <div class="d-flex gap-2 flex-wrap">
-                @for (int i = 0; i < state.Tests.Count; i++)
-                {
-                    var index = i;
+            var index = i;
 
-                    <button class="btn @EvaluationService.GetQuestionButtonClass(state, index)"
-                            @onclick="() => ButtonShowParticular(index)">
-                        @(i + 1)
-                    </button>
-                }
-            </div>
+            <button class="btn @EvaluationService.GetQuestionButtonClass(state, index)"
+                    @onclick="() => ButtonShowParticular(index)">
+                @(i + 1)
+            </button>
+        }
+    </div>
 
-            <div style="height: 20px;"></div>
+    <div class="mt-3"></div>
 
-            <h4>#@(state.CurrentQuestion + 1)</h4>
-            <h4>@state.Tests[state.CurrentQuestion].TaskDescription</h4>
+    <h4>#@(state.CurrentQuestion + 1)</h4>
+    <h4>@state.Tests[state.CurrentQuestion].TaskDescription</h4>
 
-            @if ((state.Tests[state.CurrentQuestion].CorrectAnswerIndexList?.Count ?? 0) > 1)
+    @if ((state.Tests[state.CurrentQuestion].CorrectAnswerIndexList?.Count ?? 0) > 1)
+    {
+        <ul class="list-unstyled">
+            @for (int i = 0; i < state.Tests[state.CurrentQuestion].TaskAnswers.Count; i++)
             {
-                <ul>
-                    @for (int i = 0; i < state.Tests[state.CurrentQuestion].TaskAnswers.Count; i++)
-                    {
-                        var iIndex = i;
+                var iIndex = i;
 
-                        <li>
-                            <input type="checkbox"
-                                   checked="@state.SelectedCheckbox[state.CurrentQuestion][iIndex]"
-                                   @onchange="e => state.SelectedCheckbox[state.CurrentQuestion][iIndex] = (bool)e.Value" />
+                <li style="@EvaluationService.GetAnswerStyle(state, state.CurrentQuestion, iIndex)">
+                    <input type="checkbox"
+                           checked="@state.SelectedCheckbox[state.CurrentQuestion][iIndex]"
+                           @onchange="e => state.SelectedCheckbox[state.CurrentQuestion][iIndex] = (bool)e.Value" />
 
-                            @state.Tests[state.CurrentQuestion].TaskAnswers[iIndex]
-                        </li>
-                    }
-                </ul>
+                    @state.Tests[state.CurrentQuestion].TaskAnswers[iIndex]
+                </li>
             }
-            else
+        </ul>
+    }
+    else
+    {
+        <ul class="list-unstyled">
+            @for (int i = 0; i < state.Tests[state.CurrentQuestion].TaskAnswers.Count; i++)
             {
-                <ul>
-                    @for (int i = 0; i < state.Tests[state.CurrentQuestion].TaskAnswers.Count; i++)
-                    {
-                        var iIndex = i;
+                var iIndex = i;
 
-                        <li>
-                            <input type="radio"
-                                   name="q"
-                                   checked="@(state.SelectedRadio[state.CurrentQuestion] == iIndex)"
-                                   @onchange="e => state.SelectedRadio[state.CurrentQuestion] = iIndex" />
+                <li style="@EvaluationService.GetAnswerStyle(state, state.CurrentQuestion, iIndex)">
+                    <input type="radio"
+                           name="q"
+                           checked="@(state.SelectedRadio[state.CurrentQuestion] == iIndex)"
+                           @onchange="e => state.SelectedRadio[state.CurrentQuestion] = iIndex" />
 
-                            @state.Tests[state.CurrentQuestion].TaskAnswers[iIndex]
-                        </li>
-                    }
-                </ul>
+                    @state.Tests[state.CurrentQuestion].TaskAnswers[iIndex]
+                </li>
             }
+        </ul>
+    }
 
-            <div class="mt-3">
-                @if (IsLastQuestion)
-                {
-                    <button class="btn btn-primary" @onclick="ButtonCheck">
-                        Check answers
-                    </button>
-        
-                }
-
-                @if (state.ShowResult)
-                {
-                    <h4>Result: @state.Score / @state.Tests.Count</h4>
-                }
-            </div>
-
-            <div style="height: 50px;"></div>
-
-            <div class="d-flex gap-2 mt-3">
-                <button class="btn btn-secondary" @onclick="ButtonBack">Back</button>
-                <button class="btn btn-secondary" @onclick="ButtonNext">Next</button>
-            </div>
+    <div class="mt-3">
+        @if (IsLastQuestion)
+        {
+            <button class="btn btn-primary" @onclick="ButtonCheck">
+                Check answers
+            </button>
         }
 
-        @if (!string.IsNullOrWhiteSpace(state.RawResponse))
+        @if (state.ShowResult)
         {
-            <hr />
-            <pre style="background:#111;color:#0f0;padding:10px;white-space:pre-wrap;">
-@state.RawResponse
-        </pre>
+            <h4>Result: @state.Score / @state.Tests.Count</h4>
         }
-    
+    </div>
 
+    <div class="d-flex gap-2 mt-3">
+        <button class="btn btn-secondary" @onclick="ButtonBack">Back</button>
+        <button class="btn btn-secondary" @onclick="ButtonNext">Next</button>
+    </div>
+}
 
 @code {
-        private bool loading;
+    private bool loading;
+
+    private int progress;
+
+    private CancellationTokenSource? progressToken;
     private TestState state;
     private bool IsLastQuestion =>  state != null &&
                                     state.Tests != null &&
@@ -301,8 +307,14 @@
             return;
 
         loading = true;
-        state.IsGenerated = false;
 
+        progress = 0;
+
+        progressToken = new();
+
+        _ = AnimateProgress();
+
+        state.IsGenerated = false;
         try
         {
             GeminiResult result;
@@ -352,6 +364,14 @@
         }
         finally
         {
+            progress = 100;
+
+            await InvokeAsync(StateHasChanged);
+
+            await Task.Delay(300);
+
+            progressToken?.Cancel();
+
             loading = false;
         }
     }
@@ -390,7 +410,22 @@
         state.ShowResult = false;
         state.Score = 0;
     }
+    private async Task AnimateProgress()
+    {
+        progress = 0;
 
+        while (!progressToken!.Token.IsCancellationRequested)
+        {
+            await Task.Delay(200);
+
+            if (progress < 90)
+            {
+                progress += Random.Shared.Next(2, 6);
+            }
+
+            await InvokeAsync(StateHasChanged);
+        }
+    }
     private void UpdateTab(Action<TabItem> action)
     {
         var tab = TabItemService.Tabs.FirstOrDefault(t => t.Id == InstanceId);

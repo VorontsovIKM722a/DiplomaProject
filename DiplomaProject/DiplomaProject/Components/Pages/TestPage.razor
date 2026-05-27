@@ -4,7 +4,7 @@
 
 @inject TestGeneration TestGeneration
 @inject TabItemService TabItemService
-@inject GeminiTestGenerationLocal GeminiTestGeneration  //GeminiTestGenerationLocal - підключає сервіс з локальними даними типу Json /   GeminiTestGeneration - сервіс з Gemini API //
+@inject GeminiTestGeneration GeminiTestGeneration  //GeminiTestGenerationLocal - підключає сервіс з локальними даними типу Json /   GeminiTestGeneration - сервіс з Gemini API //
 @inject GeminiPdfService GeminiPdfService
 @inject TestEvaluationService EvaluationService
 @inject JsonDataService JsonDataService
@@ -16,23 +16,23 @@
 {
     <div class="container mt-4">
 
-        <h3 class="mb-3">Test Generator</h3>
+        <h3 class="mb-3">Генератор тестових завдань</h3>
 
         <!-- MODE SWITCH -->
         <div class="btn-group mb-3">
             <button class="btn btn-outline-primary"
                     @onclick="() => SetMode(GenerationMode.Topic)">
-                Topic
+                Генерація за темою
             </button>
 
             <button class="btn btn-outline-primary"
                     @onclick="() => SetMode(GenerationMode.Json)">
-                JSON
+                Генерація за JSON файлом
             </button>
 
             <button class="btn btn-outline-primary"
                     @onclick="() => SetMode(GenerationMode.Pdf)">
-                PDF
+                Генерація за PDF файлом
             </button>
         </div>
 
@@ -109,7 +109,7 @@
             <button class="btn btn-primary w-100 mt-2"
                     @onclick="Generate"
                     disabled="@(!CanGenerate)">
-                Generate tests
+                Згенерувати тест
             </button>
 
             <!-- PROGRESS -->
@@ -197,7 +197,7 @@
         @if (IsLastQuestion)
         {
             <button class="btn btn-primary" @onclick="ButtonCheck">
-                Check answers
+                Завершити тест
             </button>
         }
 
@@ -208,8 +208,13 @@
     </div>
 
     <div class="d-flex gap-2 mt-3">
-        <button class="btn btn-secondary" @onclick="ButtonBack">Back</button>
-        <button class="btn btn-secondary" @onclick="ButtonNext">Next</button>
+        <button class="btn btn-secondary" @onclick="ButtonBack">
+            ←
+        </button>
+
+        <button class="btn btn-secondary" @onclick="ButtonNext">
+            →
+        </button>
     </div>
 }
 
@@ -261,7 +266,7 @@
                     .ToList();
         }
 
-        // синхронізація Checkbox
+        
         while (state.SelectedCheckbox.Count < state.Tests.Count)
         {
             var answers =

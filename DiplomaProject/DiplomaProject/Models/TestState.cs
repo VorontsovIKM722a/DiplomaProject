@@ -26,4 +26,5 @@ public class TestState
     public GenerationMode Mode { get; set; } = GenerationMode.Topic;
 
     public string? PdfPath { get; set; }
+    public bool IsSaved { get; set; }
 }

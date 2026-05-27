@@ -6,6 +6,9 @@ public class TabItemService
     private readonly GeminiTestGeneration _testGeneration;
     private readonly DeleteTestService _deleteTestService;
 
+    
+    public event Action? OnChange;
+
     public List<TabItem> Tabs { get; set; } = new();
     public string? ActiveTab { get; set; }
 
@@ -17,6 +20,8 @@ public class TabItemService
         _deleteTestService = deleteTestService;
     }
 
+   
+    public void NotifyStateChanged() => OnChange?.Invoke();
 
     public async Task AddTabAsync()
     {
@@ -29,7 +34,9 @@ public class TabItemService
 
         Tabs.Add(tab);
         ActiveTab = tab.Id;
+        NotifyStateChanged();
     }
+
     private TestState CreateEmptyState()
     {
         return new TestState
@@ -57,18 +64,43 @@ public class TabItemService
         }
 
         ActiveTab = Tabs.LastOrDefault()?.Id;
+
+      
+        NotifyStateChanged();
     }
 
     public void SelectTab(string id)
     {
         ActiveTab = id;
+
+       
+        NotifyStateChanged();
     }
 
-   
     public TabItem? GetActiveTab()
     {
         return Tabs.FirstOrDefault(t => t.Id == ActiveTab);
     }
 
-    
+    public void RestartActiveTab()
+    {
+        var tab = GetActiveTab();
+
+        if (tab?.State == null)
+            return;
+
+        var state = tab.State;
+
+        state.CurrentQuestion = 0;
+        state.ShowResult = false;
+        state.Score = 0;
+        state.IsSaved = false;
+
+        state.SelectedRadio ??= new();
+        state.SelectedCheckbox ??= new();
+
+        state.CurrentQuestion = 0;
+
+        NotifyStateChanged();
+    }
 }

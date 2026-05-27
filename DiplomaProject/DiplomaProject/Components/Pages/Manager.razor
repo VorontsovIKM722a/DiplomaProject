@@ -10,66 +10,63 @@
 
 @rendermode InteractiveServer
 
-<div class="manager-container d-flex gap-4 p-3">
+<div class="manager-container d-flex gap-4 p-3 no-copy"
+     tabindex="0"
+     
 
     <!-- LEFT PANEL -->
-    <div class="d-flex flex-column gap-2">
+    <div class="border rounded-3 shadow-sm p-3 bg-light"
+         style="width: 340px;">
 
-        <button class="btn btn-primary mb-2"
+        <button class="btn btn-primary w-100 mb-3"
                 @onclick="AddTab">
-            + Нова вкладка
+            + Новий тест
         </button>
 
-        @foreach (var tab in Tabs)
-        {
-            var isActive = ActiveTab == tab.Id;
+        <div class="d-flex flex-column gap-2">
 
-            <div class="d-flex align-items-center justify-content-between p-2 rounded border
-                @(isActive ? "bg-primary-subtle border-primary" : "bg-white")"
-                 style="transition: 0.15s;">
+            @foreach (var tab in Tabs)
+            {
+                var isActive = ActiveTab == tab.Id;
 
-                <div style="
-                    width: 4px;
-                    height: 32px;
-                    border-radius: 4px;
-                    margin-right: 8px;
-                    background: @(isActive ? "#0d6efd" : "transparent");">
+                <div class="d-flex align-items-center justify-content-between p-2 rounded border
+                    @(isActive ? "bg-primary-subtle border-primary" : "bg-white")">
+
+                    <div style="width:4px;height:28px;border-radius:4px;
+                        background:@(isActive ? "#0d6efd" : "transparent");
+                        margin-right:8px;">
+                    </div>
+
+                    <button class="btn btn-sm flex-grow-1 text-start border-0 bg-transparent text-truncate"
+                             @onclick="() => SelectTab(tab.Id)">
+                        @tab.Title
+
+                        @if (tab.IsCompleted)
+                        {
+                            <span class="ms-2 text-success">●</span>
+                        }
+                    </button>
+
+                    <button class="btn btn-sm btn-outline-danger ms-2"
+                            @onclick="() => RemoveTab(tab.Id)">
+                        ✕
+                    </button>
+
                 </div>
+            }
 
-                <button class="btn btn-sm flex-grow-1 text-start border-0 bg-transparent text-truncate"
-                        title="@tab.Title"
-                        @onclick="() => SelectTab(tab.Id)">
-
-                    @tab.Title
-
-                    @if (tab.IsCompleted)
-                    {
-                        <span class="ms-2 text-success">●</span>
-                    }
-
-                </button>
-
-                <button class="btn btn-sm btn-outline-danger ms-2"
-                        @onclick="() => RemoveTab(tab.Id)">
-                    ✕
-                </button>
-
-            </div>
-        }
-
+        </div>
     </div>
 
-    <!-- MAIN AREA -->
+    <!-- MAIN -->
     <div class="flex-grow-1">
 
         <div class="card shadow-sm border-0 mb-3">
-
             <div class="card-header bg-white">
                 <strong>Активна вкладка</strong>
             </div>
 
             <div class="card-body">
-
                 @if (ActiveTabItem != null)
                 {
                     <DynamicComponent Type="typeof(TestPage)"
@@ -77,40 +74,65 @@
                 }
                 else
                 {
-                    <div class="text-muted">
-                        Вкладку не вибрано
-                    </div>
+                    <div class="text-muted">Вкладку не вибрано</div>
                 }
-
             </div>
         </div>
 
         <button class="btn btn-success"
                 @onclick="SaveActiveTab"
                 disabled="@(!CanSaveActiveTab)">
-            Save test
+
+            @(ActiveTabItem?.State?.IsSaved == true
+                ? "✓ Результат збережено"
+                : "💾 Зберегти результат")
         </button>
 
-    </div>
+        <button class="btn btn-warning ms-2"
+                @onclick="RestartTest"
+                disabled="@(ActiveTabItem?.State == null)">
+            🔄 Заново
+        </button>
 
+        <hr />
+
+    </div>
 </div>
+
+<style>
+    .no-copy {
+        user-select: none;
+        -webkit-user-select: none;
+        -ms-user-select: none;
+    }
+</style>
+
 @code{
     private bool CanSaveActiveTab =>
     ActiveTabItem?.State != null &&
     ActiveTabItem.State.Tests?.Count > 0 &&
-    ActiveTabItem.State.ShowResult == true;
+    ActiveTabItem.State.ShowResult &&
+    !ActiveTabItem.State.IsSaved;
 
     private async Task SaveActiveTab()
     {
         var tab = ActiveTabItem;
 
-        if (tab?.State == null)
+        if (tab?.State == null || tab.State.IsSaved)
             return;
 
         var score = TestEvaluationService.CalculateScore(tab.State);
 
         await SaveTestService.SaveAsync(tab.State, tab.Id);
         await SaveTestService.SaveResultAsync(tab.State, tab.Id, score);
+
+        tab.State.IsSaved = true;
+
+        await InvokeAsync(StateHasChanged);
+    }
+    private void RestartTest()
+    {
+        TabItemService.RestartActiveTab();
     }
 
     private async Task AddTab()
@@ -127,9 +149,11 @@
             TabItemService.Tabs.Remove(tab);
     }
 
-    private void SelectTab(string id)
+    private async Task SelectTab(string id)
     {
         TabItemService.SelectTab(id);
+
+        await InvokeAsync(StateHasChanged);
     }
 
     List<TabItem> Tabs => TabItemService.Tabs;

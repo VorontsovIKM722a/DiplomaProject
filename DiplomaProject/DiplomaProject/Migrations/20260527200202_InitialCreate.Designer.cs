@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DiplomaProject.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260521185013_RecreateDeletedTable")]
-    partial class RecreateDeletedTable
+    [Migration("20260527200202_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

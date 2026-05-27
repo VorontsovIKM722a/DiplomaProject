@@ -31,7 +31,7 @@
 
         <button class="btn btn-primary w-100 mb-3"
                 @onclick="AddTab">
-            + Нова вкладка
+            + Новий тест
         </button>
 
         <div class="d-flex flex-column gap-2">
@@ -93,7 +93,16 @@
         <button class="btn btn-success"
                 @onclick="SaveActiveTab"
                 disabled="@(!CanSaveActiveTab)">
-            Save test
+
+            @(ActiveTabItem?.State?.IsSaved == true
+                ? "✓ Результат збережено"
+                : "💾 Зберегти результат")
+        </button>
+
+        <button class="btn btn-warning ms-2"
+                @onclick="RestartTest"
+                disabled="@(ActiveTabItem?.State == null)">
+            🔄 Заново
         </button>
 
         <hr />
@@ -138,6 +147,14 @@
         TabItemService.Tabs.AddRange(tabsFromDb);
     }
 
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await JS.InvokeVoidAsync("anticheat.enableExitWarning");
+        }
+    }
+
     private bool CanSaveActiveTab =>
         ActiveTabItem?.State != null &&
         ActiveTabItem.State.Tests?.Count > 0 &&
@@ -156,6 +173,11 @@
         await SaveTestService.SaveResultAsync(tab.State, tab.Id, score);
     }
 
+    private void RestartTest()
+    {
+        TabItemService.RestartActiveTab();
+    }
+
     private void OnMouseMove(MouseEventArgs e)
     {
         x = e.ClientX;
@@ -163,9 +185,7 @@
     }
 
     private async Task AddTab()
-    {
-        await TabItemService.AddTabAsync();
-    }
+        => await TabItemService.AddTabAsync();
 
     private async Task RemoveTab(string id)
     {
@@ -177,14 +197,10 @@
     }
 
     private void SelectTab(string id)
-    {
-        TabItemService.SelectTab(id);
-    }
+        => TabItemService.SelectTab(id);
 
     private void HandleChange()
-    {
-        InvokeAsync(StateHasChanged);
-    }
+        => InvokeAsync(StateHasChanged);
 
     public void Dispose()
     {
@@ -198,6 +214,7 @@
             SpotlightService.SetRadius(value);
         }
     }
+
     private void BlockKeys(KeyboardEventArgs e)
     {
         if (e.CtrlKey)
@@ -206,13 +223,13 @@
 
             if (key is "c" or "s" or "p")
             {
-                return; // НЕПРАВИЛЬНО блокувати тут — C# не має preventDefault
+                // просто ігноруємо
+                return;
             }
         }
     }
 
     List<TabItem> Tabs => TabItemService.Tabs;
-
     string? ActiveTab => TabItemService.ActiveTab;
 
     TabItem? ActiveTabItem =>

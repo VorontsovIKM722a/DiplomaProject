@@ -9,7 +9,7 @@
 @inject DeleteTestService DeleteTestService
 @inject SaveTestService SaveTestService
 @inject TestEvaluationService TestEvaluationService
-
+@inject AntiCheatService AntiCheatService
 @rendermode InteractiveServer
 
 <div class="manager-container d-flex gap-4 p-3 no-copy"
@@ -121,7 +121,30 @@
                    @oninput="OnRadiusChanged"
                    class="form-range" />
         </div>
+        <div class="mt-3 p-3 border rounded bg-light">
 
+            <div class="fw-bold mb-2 text-dark">
+                Анти-чит моніторинг
+            </div>
+
+            <div class="d-flex align-items-center gap-2 text-muted">
+                <span class="fw-semibold text-primary">@tabSwitchCount</span>
+                <span>— перемикання вкладки</span>
+            </div>
+
+            <div class="d-flex align-items-center gap-2 text-muted">
+                <span class="fw-semibold text-danger">@screenshotCount</span>
+                <span>— спроби скріншоту</span>
+            </div>
+
+            @if (tabSwitchCount > 3 || screenshotCount > 2)
+            {
+                <div class="alert alert-danger mt-2 py-1 px-2 mb-0">
+                    ⚠ Виявлено підозрілу активність
+                </div>
+            }
+
+        </div>
     </div>
 </div>
 
@@ -133,9 +156,33 @@
     }
 </style>
 
+@implements IAsyncDisposable
+
 @code {
+    private int tabSwitchCount;
+    private int screenshotCount;
     double x = 200;
     double y = 200;
+
+    [JSInvokable]
+    public void OnTabHidden()
+    {
+        tabSwitchCount++;
+    }
+
+    [JSInvokable]
+    public async Task OnPrintScreen()
+    {
+        screenshotCount++;
+
+        await AntiCheatService.BlackoutAsync();
+
+        await Task.Delay(1000);
+
+        await AntiCheatService.ResetAsync();
+
+        await InvokeAsync(StateHasChanged);
+    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -151,7 +198,8 @@
     {
         if (firstRender)
         {
-            await JS.InvokeVoidAsync("anticheat.enableExitWarning");
+            await AntiCheatService.InitAsync(this);
+            await AntiCheatService.EnableExitWarningAsync();
         }
     }
 
@@ -202,11 +250,6 @@
     private void HandleChange()
         => InvokeAsync(StateHasChanged);
 
-    public void Dispose()
-    {
-        SpotlightService.OnChange -= HandleChange;
-    }
-
     private void OnRadiusChanged(ChangeEventArgs e)
     {
         if (int.TryParse(e.Value?.ToString(), out var value))
@@ -223,7 +266,6 @@
 
             if (key is "c" or "s" or "p")
             {
-                // просто ігноруємо
                 return;
             }
         }
@@ -240,4 +282,9 @@
         {
             { "InstanceId", id }
         };
+
+    public async ValueTask DisposeAsync()
+    {
+        SpotlightService.OnChange -= HandleChange;
+    }
 }

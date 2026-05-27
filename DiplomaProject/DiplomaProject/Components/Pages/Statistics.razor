@@ -1,9 +1,8 @@
 ﻿@page "/statistics"
-@using Microsoft.EntityFrameworkCore
-@using DiplomaProject.Data
 @using DiplomaProject.Models.Entities
+@using DiplomaProject.Services
 
-@inject ApplicationDbContext Db
+@inject TestStatisticsService StatisticsService
 
 <h3>Статистика</h3>
 
@@ -35,24 +34,11 @@ else
 
         <details class="mb-3">
 
-            <summary style="
-                cursor:pointer;
-                padding:10px;
-                background:#eee;
-                border-radius:8px;">
+            <summary style="cursor:pointer; padding:10px; background:#eee; border-radius:8px;">
 
-                <div>
-                    <b>@tab.Title</b>
-                </div>
-
-                <div>
-                    Спроб: @attempts.Count
-                </div>
-
-                <div>
-                    Середній бал:
-                    @avg.ToString("0.00") / @maxScore
-                </div>
+                <div><b>@tab.Title</b></div>
+                <div>Спроб: @attempts.Count</div>
+                <div>Середній бал: @avg.ToString("0.00") / @maxScore</div>
 
             </summary>
 
@@ -63,20 +49,16 @@ else
                     <div class="card p-3 mb-2">
 
                         <div>
-                            <b>Score:</b>
-                            @attempt.Score / @maxScore
+                            <b>Бал:</b> @attempt.Score / @maxScore
                         </div>
 
                         <div>
-                            <b>Date:</b>
-                            @attempt.CreatedAt
-                           
+                            <b>Дата:</b> @attempt.CreatedAt
                         </div>
 
                         <hr />
 
-                        @foreach (var ans in attempt.Answers
-                        .OrderBy(a => a.QuestionIndex))
+                        @foreach (var ans in attempt.Answers.OrderBy(a => a.QuestionIndex))
                         {
                             <div>
                                 Q@(ans.QuestionIndex + 1)
@@ -95,16 +77,10 @@ else
 }
 
 @code {
-
-    private List<TabItemEntity> tabs = new();
+    private List<TabItemEntity>? tabs;
 
     protected override async Task OnInitializedAsync()
     {
-        tabs = await Db.Tabs
-            .Include(t => t.TestState)
-                .ThenInclude(s => s.Attempts)
-                    .ThenInclude(a => a.Answers)
-            .OrderBy(t => t.Title)
-            .ToListAsync();
+        tabs = await StatisticsService.GetStatisticsAsync();
     }
 }

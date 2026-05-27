@@ -12,6 +12,7 @@ builder.Services.AddScoped<TestGeneration>();
 builder.Services.AddScoped<TabItemService>();
 builder.Services.AddSingleton<SpotlightService>();
 builder.Services.AddSingleton<TestEvaluationService>();
+builder.Services.AddScoped<TestStatisticsService>();
 
 builder.Services.AddSingleton<JsonDataService>();
 builder.Services.AddSingleton<GeminiPdfService>();
@@ -21,7 +22,7 @@ builder.Services.AddSingleton<GeminiTestGenerationLocal>();
 builder.Services.AddScoped<SaveTestService>();
 builder.Services.AddScoped<LoadTestService>();
 builder.Services.AddScoped<DeleteTestService>();
-
+builder.Services.AddScoped<AntiCheatService>();
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseMySql(
         builder.Configuration.GetConnectionString("DefaultConnection"),

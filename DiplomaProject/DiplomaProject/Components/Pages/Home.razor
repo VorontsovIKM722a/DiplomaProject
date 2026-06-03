@@ -1,8 +1,148 @@
 ﻿@page "/"
-<h1>Home instance</h1>
+@rendermode InteractiveServer
+@inject NavigationManager Navigation
 
-<p>Tab ID: @InstanceId</p>
+<div class="home-container">
 
-@code {
-    [Parameter] public string InstanceId { get; set; }
-}
+    <div class="hero-card">
+
+        <h1 class="hero-title">
+            VBL — Virtual Brain Lab
+        </h1>
+
+        <p class="hero-subtitle">
+            Оберіть розділ системи
+        </p>
+
+    </div>
+
+    <div class="menu-grid">
+
+        <button class="menu-card"
+                @onclick='() => Navigation.NavigateTo("statistics")'>
+
+            <div class="menu-icon">
+                <i class="bi bi-bar-chart-line"></i>
+            </div>
+
+            <div class="menu-name">
+                Статистика
+            </div>
+
+            <div class="menu-description">
+                Перегляд результатів та аналітики
+            </div>
+
+        </button>
+
+        <button class="menu-card"
+                @onclick='() => Navigation.NavigateTo("manager")'>
+
+            <div class="menu-icon">
+                <i class="bi bi-clipboard-check"></i>
+            </div>
+
+            <div class="menu-name">
+                Менеджер тестів
+            </div>
+
+            <div class="menu-description">
+                Створення та проходження тестів
+            </div>
+
+        </button>
+
+        <button class="menu-card"
+                @onclick='() => Navigation.NavigateTo("manager-anticheat")'>
+
+            <div class="menu-icon">
+                <i class="bi bi-shield-lock"></i>
+            </div>
+
+            <div class="menu-name">
+                AntiCheat
+            </div>
+
+            <div class="menu-description">
+                Моніторинг підозрілої активності
+            </div>
+
+        </button>
+
+    </div>
+
+</div>
+
+<style>
+
+    .home-container {
+        min-height: 100vh;
+        padding: 40px;
+        background: linear-gradient( to bottom right, #f8fafc, #eef2ff );
+    }
+
+    .hero-card {
+        background: white;
+        border-radius: 28px;
+        padding: 40px;
+        margin-bottom: 30px;
+        border: 1px solid #e5e7eb;
+        box-shadow: 0 10px 35px rgba(0,0,0,.08);
+    }
+
+    .hero-title {
+        margin: 0;
+        font-size: 42px;
+        font-weight: 800;
+        color: #111827;
+    }
+
+    .hero-subtitle {
+        margin-top: 10px;
+        color: #6b7280;
+        font-size: 18px;
+    }
+
+    .menu-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 24px;
+    }
+
+    .menu-card {
+        border: none;
+        text-align: left;
+        padding: 28px;
+        border-radius: 24px;
+        background: white;
+        cursor: pointer;
+        border: 1px solid #e5e7eb;
+        box-shadow: 0 10px 35px rgba(0,0,0,.08);
+        transition: .25s ease;
+    }
+
+    .menu-icon {
+        font-size: 42px;
+        margin-bottom: 16px;
+        color: #2563eb;
+        line-height: 1;
+    }
+
+    .menu-card:hover .menu-icon {
+        transform: scale(1.05);
+        transition: .25s ease;
+    }
+
+    .menu-name {
+        font-size: 22px;
+        font-weight: 700;
+        color: #111827;
+        margin-bottom: 8px;
+    }
+
+    .menu-description {
+        color: #6b7280;
+        line-height: 1.5;
+    }
+
+</style>

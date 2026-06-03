@@ -2,7 +2,7 @@
 
 public class SpotlightService
 {
-    public bool Enabled { get; private set; } = true;
+    public bool Enabled { get; private set; } = false;
     public int Radius { get; private set; } = 120;
 
     public event Action? OnChange;

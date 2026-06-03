@@ -1,4 +1,3 @@
-using DiplomaProject.Client.Pages;
 using DiplomaProject.Components;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using DiplomaProject.Services;
@@ -7,23 +6,24 @@ using Microsoft.EntityFrameworkCore;
 
 
 var builder = WebApplication.CreateBuilder(args);
-
 builder.Services.AddScoped<TestGeneration>();
 builder.Services.AddScoped<TabItemService>();
-builder.Services.AddSingleton<SpotlightService>();
-builder.Services.AddSingleton<TestEvaluationService>();
+builder.Services.AddScoped<SpotlightService>();
+builder.Services.AddScoped<TestEvaluationService>();
+
 builder.Services.AddScoped<TestStatisticsService>();
+builder.Services.AddScoped<AntiCheatService>();
+
+builder.Services.AddScoped<SaveTestService>();
+builder.Services.AddScoped<LoadTestService>();
+builder.Services.AddScoped<DeleteTestService>();
 
 builder.Services.AddSingleton<JsonDataService>();
 builder.Services.AddSingleton<GeminiPdfService>();
 builder.Services.AddSingleton<GeminiTestGeneration>();
 builder.Services.AddSingleton<GeminiTestGenerationLocal>();
 
-builder.Services.AddScoped<SaveTestService>();
-builder.Services.AddScoped<LoadTestService>();
-builder.Services.AddScoped<DeleteTestService>();
-builder.Services.AddScoped<AntiCheatService>();
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
+builder.Services.AddDbContextFactory<ApplicationDbContext>(options =>
     options.UseMySql(
         builder.Configuration.GetConnectionString("DefaultConnection"),
         ServerVersion.AutoDetect(builder.Configuration.GetConnectionString("DefaultConnection"))

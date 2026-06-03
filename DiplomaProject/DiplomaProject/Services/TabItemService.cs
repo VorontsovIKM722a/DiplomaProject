@@ -84,7 +84,7 @@ public class TabItemService
 
     public void RestartActiveTab()
     {
-        var tab = GetActiveTab();
+        var tab = Tabs.FirstOrDefault(t => t.Id == ActiveTab);
 
         if (tab?.State == null)
             return;
@@ -96,10 +96,18 @@ public class TabItemService
         state.Score = 0;
         state.IsSaved = false;
 
-        state.SelectedRadio ??= new();
-        state.SelectedCheckbox ??= new();
+        if (state.Tests != null)
+        {
+            state.SelectedRadio = state.Tests.Select(_ => -1).ToList();
 
-        state.CurrentQuestion = 0;
+            state.SelectedCheckbox = state.Tests
+                .Select(t => (t.TaskAnswers ?? new())
+                .Select(_ => false)
+                .ToList())
+                .ToList();
+        }
+
+        tab.IsCompleted = false; // 🔥 ОЦЕ В ТЕБЕ ЛОМАЄ "ЗАНОВО"
 
         NotifyStateChanged();
     }

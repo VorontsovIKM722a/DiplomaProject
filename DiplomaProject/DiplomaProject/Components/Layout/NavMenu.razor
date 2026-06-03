@@ -1,38 +1,214 @@
-﻿<div class="top-row ps-3 navbar navbar-dark">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="">DiplomaProject</a>
-    </div>
+﻿<div class="burger-layout">
+
+    <input type="checkbox"
+           id="menu-toggle"
+           class="menu-toggle" />
+
+    <label for="menu-toggle" class="burger-button">
+        <span></span>
+        <span></span>
+        <span></span>
+    </label>
+
+    <label for="menu-toggle" class="menu-overlay"></label>
+
+    <aside class="sidebar">
+
+        <div class="sidebar-header">
+            <div class="sidebar-logo">
+                VBL
+                
+            </div>
+            <div>  
+                Virtual Brain Lab
+            </div>
+            
+        </div>
+
+        <nav class="sidebar-nav">
+
+            <NavLink class="menu-link"
+                     href=""
+                     Match="NavLinkMatch.All">
+                <i class="bi bi-house-door"></i>
+                Домашня сторінка
+            </NavLink>
+
+            <NavLink class="menu-link"
+                     href="statistics">
+                <i class="bi bi-bar-chart"></i>
+                Статистика
+            </NavLink>
+
+            <NavLink class="menu-link"
+                     href="manager">
+                <i class="bi bi-journal-text"></i>
+                Менеджер тестів
+            </NavLink>
+
+            <NavLink class="menu-link"
+                     href="manager-anticheat">
+                <i class="bi bi-shield-check"></i>
+                Anticheat
+            </NavLink>
+
+        </nav>
+
+    </aside>
+
 </div>
 
-<input type="checkbox" title="Navigation menu" class="navbar-toggler" />
+                <style>
+                    .menu-toggle {
+    display: none;
+}
 
-<div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
-    <nav class="nav flex-column">
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Домашня сторінка
-            </NavLink>
-        </div>
-       
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="statistics">
-                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Статистика
-            </NavLink>
-        </div>
+/* BURGER */
 
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="manager">
-                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Менеджер тестів
-            </NavLink>
-        </div>
+.burger-button {
+    position: fixed;
+    top: 20px;
+    left: 20px;
 
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="manager-anticheat">
-                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Anticheat сторінка
-            </NavLink>
-        </div>
+    width: 46px;
+    height: 46px;
 
-        
-    </nav>
-</div>
+    background: white;
 
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 5px;
+
+    padding: 0 12px;
+
+    cursor: pointer;
+
+    z-index: 3000;
+
+    box-shadow: 0 6px 18px rgba(0,0,0,.08);
+
+    transition: .2s ease;
+}
+
+.burger-button:hover {
+    transform: translateY(-2px);
+}
+
+.burger-button span {
+    height: 2px;
+    background: #374151;
+    border-radius: 99px;
+}
+
+/* OVERLAY */
+
+.menu-overlay {
+    position: fixed;
+    inset: 0;
+
+    background: rgba(0,0,0,.35);
+
+    opacity: 0;
+    visibility: hidden;
+
+    transition: .3s ease;
+
+    z-index: 2400;
+}
+
+/* SIDEBAR */
+
+.sidebar {
+    position: fixed;
+
+    top: 0;
+    left: -320px;
+
+    width: 300px;
+    height: 100vh;
+
+    background: white;
+
+    border-right: 1px solid #e5e7eb;
+
+    box-shadow: 0 10px 35px rgba(0,0,0,.12);
+
+    transition: .3s ease;
+
+    z-index: 2500;
+}
+
+/* OPEN STATE */
+
+.menu-toggle:checked ~ .sidebar {
+    left: 0;
+}
+
+.menu-toggle:checked ~ .menu-overlay {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* HEADER */
+
+    .sidebar-header {
+        padding-top: 70px;
+        padding-left: 24px;
+        padding-right: 24px;
+        padding-bottom: 24px;
+    }
+
+.sidebar-logo {
+    font-size: 24px;
+    font-weight: 700;
+
+    color: #111827;
+}
+
+/* LINKS */
+
+.sidebar-nav {
+    display: flex;
+    flex-direction: column;
+
+    gap: 10px;
+
+    padding: 20px;
+}
+
+.menu-link {
+    padding: 14px 18px;
+
+    border-radius: 16px;
+
+    text-decoration: none;
+
+    color: #374151;
+
+    font-weight: 600;
+
+    transition: .2s ease;
+}
+
+.menu-link:hover {
+    background: #f3f4f6;
+}
+
+.menu-link.active {
+    background: linear-gradient(
+        135deg,
+        #eef2ff,
+        #dbeafe
+    );
+
+    border: 1px solid #93c5fd;
+
+    color: #2563eb;
+
+    box-shadow: 0 6px 20px rgba(59,130,246,.12);
+}
+                </style>

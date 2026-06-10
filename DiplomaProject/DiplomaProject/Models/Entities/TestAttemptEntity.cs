@@ -1,8 +1,7 @@
 ﻿public class TestAttemptEntity
 {
     public int Id { get; set; }
-    public int TestStateId { get; set; }
-
+    
     public int Score { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 

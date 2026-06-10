@@ -2,7 +2,7 @@
 {
     public int Id { get; set; }
 
-    public int AttemptId { get; set; }
+    
     public int QuestionIndex { get; set; }
 
     public int SelectedAnswerIndex { get; set; }

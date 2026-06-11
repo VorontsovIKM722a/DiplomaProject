@@ -104,6 +104,9 @@ namespace DiplomaProject.Migrations
 
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<int>("AttemptId")
+                        .HasColumnType("int");
+
                     b.Property<bool>("IsCorrect")
                         .HasColumnType("tinyint(1)");
 
@@ -138,6 +141,9 @@ namespace DiplomaProject.Migrations
                         .HasColumnType("int");
 
                     b.Property<int?>("TestStateEntityId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("TestStateId")
                         .HasColumnType("int");
 
                     b.HasKey("Id");

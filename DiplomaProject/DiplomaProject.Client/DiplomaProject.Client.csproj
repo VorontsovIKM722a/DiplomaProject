@@ -14,11 +14,6 @@
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="10.0.6" />
     <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.7" />
     <PackageReference Include="OpenAI" Version="2.10.0" />
-    <PackageReference Include="PlantUml.Net" Version="1.4.80" />
-    <PackageReference Include="PlantUmlClassDiagramGenerator.SourceGenerator" Version="1.1.0">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
     <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="9.0.0" />
   </ItemGroup>
 

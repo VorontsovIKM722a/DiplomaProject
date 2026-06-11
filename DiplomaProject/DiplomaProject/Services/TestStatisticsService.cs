@@ -23,6 +23,7 @@ namespace DiplomaProject.Services
                 .ToListAsync();
         }
 
+       
         public List<TabStatisticsDto> BuildStatistics(List<TabItemEntity> tabs)
         {
             var result = new List<TabStatisticsDto>();
@@ -33,17 +34,15 @@ namespace DiplomaProject.Services
                     .OrderByDescending(x => x.CreatedAt)
                     .ToList();
 
-                if (attempts == null || attempts.Count == 0)
+                if (attempts == null || !attempts.Any())
                     continue;
 
-                // ✔ стабільна кількість питань (беремо з першої спроби)
-                var maxScore = attempts.First().Answers?.Count ?? 0;
+                var maxScore =
+                    tab.TestState?.Count > 0
+                        ? tab.TestState.Count
+                        : attempts.Max(x => x.Answers?.Count ?? 0);
 
-                if (maxScore == 0)
-                    continue;
-
-                // ✔ середній результат у %
-                var avg = attempts.Average(x => (double)x.Score / maxScore)*10;
+                var avg = attempts.Average(x => x.Score);
 
                 var dto = new TabStatisticsDto
                 {
@@ -51,20 +50,17 @@ namespace DiplomaProject.Services
                     AttemptsCount = attempts.Count,
                     AverageScore = avg,
                     MaxScore = maxScore,
-
                     Attempts = attempts.Select(a => new AttemptDto
                     {
                         Score = a.Score,
                         CreatedAt = a.CreatedAt,
-
                         Answers = a.Answers
                             .OrderBy(x => x.QuestionIndex)
                             .Select(ans => new AnswerDto
                             {
                                 QuestionIndex = ans.QuestionIndex,
                                 IsCorrect = ans.IsCorrect
-                            })
-                            .ToList()
+                            }).ToList()
                     }).ToList()
                 };
 
@@ -79,13 +75,8 @@ namespace DiplomaProject.Services
     {
         public string Title { get; set; } = null!;
         public int AttemptsCount { get; set; }
-
-        // тепер це %
         public double AverageScore { get; set; }
-
-        // кількість питань у тесті
         public int MaxScore { get; set; }
-
         public List<AttemptDto> Attempts { get; set; } = new();
     }
 

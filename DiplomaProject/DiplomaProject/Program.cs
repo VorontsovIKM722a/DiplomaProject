@@ -56,7 +56,7 @@ app.UseAntiforgery();
 app.MapStaticAssets();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode()
-    .AddInteractiveWebAssemblyRenderMode()
-    .AddAdditionalAssemblies(typeof(DiplomaProject.Client._Imports).Assembly);
+    .AddInteractiveWebAssemblyRenderMode();
+   
 
 app.Run();
